@@ -1,22 +1,13 @@
 /*
   Created by: Stuart Mead
   Creation date: 2014-02-03
-   
-  Revision:       $Revision: $
-  Last changed:   $Date: $
-  Last changed by: Stuart Mead
+  
+  Released under BSD 3 clause.
+  Use it however you want, but I cannot guarantee it is right.
+  Also don't use my name, the name of collaborators and my/their affiliations
+  as endorsement.
 
-  Copyright Risk Frontiers 2014, Faculty of Science, Macquarie University, NSW 2109, Australia.
-
-  For further information, contact:
-          Stuart Mead
-          Building E7A
-          Dept. of Environment & Geography
-          Macquarie University
-          North Ryde NSW 2109
-
-  This copyright notice must be included with all copies of the source code.
-
+  This is a whole bunch of utility functions for erosion/shallow landsliding for lahars.
 */
 
 #ifndef RF_EROSIONUTILS_H
@@ -131,7 +122,7 @@ double determineResponse(double t, double duration, double Z, double D_eff);
 
 double determineUnsteadyFOS(double time, double duration, double waterWeight, double satSoilWeight, double frictionAngleRad, double slopeAngleRad, double IzkSat, double Z, double D_eff);
 
-//Lovingly plagiarised from john cook.
+//Lovingly plagiarised from John Cook.
 double erf(double x);
 
 double erfc(double x);

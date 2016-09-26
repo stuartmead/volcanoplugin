@@ -19,6 +19,16 @@ Created by: Stuart Mead
 */
 
 #include <cassert>
+/*
+  Created by: Stuart Mead
+  Creation date: 2014-02-03
+  
+  Released under BSD 3 clause.
+  Use it however you want, but I cannot guarantee it is right.
+  Also don't use my name, the name of collaborators and my/their affiliations
+  as endorsement.
+
+*/
 #include <iostream>
 
 #include <qstring.h>

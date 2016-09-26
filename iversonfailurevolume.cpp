@@ -1,21 +1,12 @@
 /*
-Created by: Stuart Mead
+  Created by: Stuart Mead
   Creation date: 2014-02-03
-   
-  Revision:       $Revision: $
-  Last changed:   $Date: $
-  Last changed by: Stuart Mead
+  
+  Released under BSD 3 clause.
+  Use it however you want, but I cannot guarantee it is right.
+  Also don't use my name, the name of collaborators and my/their affiliations
+  as endorsement.
 
-  Copyright Risk Frontiers 2014, Faculty of Science, Macquarie University, NSW 2109, Australia.
-
-  For further information, contact:
-          Stuart Mead
-          Building E7A
-          Dept. of Environment & Geography
-          Macquarie University
-          North Ryde NSW 2109
-
-  This copyright notice must be included with all copies of the source code.
 */
 
 #include <cassert>
@@ -265,62 +256,6 @@ namespace RF
         double slopeAngleRad, frictAngleRad,frictionFOS,cohesionFOS,porePressureFOS, unsteadyFOS, depositThickness, waterTable;
         double runOff = 0;
 
-        /**********************************
-        Test Response
-        ***********************************/
-        /*
-        for (int i = 0; i < 10000; ++i)
-        {
-            double t = i*0.1;
-            if (t <= 10.0)
-            {
-                yVec.push_back(response(t));
-            }
-            else
-            {
-                yVec.push_back(response(t)-response(t-10.0));
-            }
-            xVec.push_back(t);
-            if (i%1000 == 0)
-            {
-                std::cout << QString("Response at i %1 t %2 is %3").arg(i).arg(t).arg(response(t)-response(t-0.1)) + "\n";
-            }
-        }
-        */
-               
-
-
-        /*************************************
-        Test FOS
-        *************************************/
-        /*
-        double Ff = tan(degreesToRadians(frictionAngle))/tan(degreesToRadians(45));
-        //std::cout << QString("Friction FOS is %1").arg(Ff) + "\n";
-        double izKsat;
-        if (rainfallIntensity > hydraulicConductivity)
-        {
-            izKsat = 1;
-            runOff += rainfallIntensity - hydraulicConductivity;
-        } else
-        {
-            izKsat = rainfallIntensity/hydraulicConductivity;
-        }
-        double D_eff = 4*hydralicDiffusivity*pow(cos(degreesToRadians(45)),2);
-        //std::cout << QString("Deff is %1").arg(D_eff) + "\n";
-        for (int i = 0; i < Z.size(); ++i)
-        {
-            double Fc = cohesion/(saturatedSoilWeight*Z[i]*sin(degreesToRadians(45))*cos(degreesToRadians(45)));
-          //  std::cout << QString("Cohesion FOS is %1").arg(Fc) + "\n";
-            double backgroundHead = pow(cos(degreesToRadians(45)),2)*(1-(waterTableDepth/Z[i]));
-            double Fw = (backgroundHead*Z[i]*waterWeight*tan(degreesToRadians(frictionAngle)))/(saturatedSoilWeight*Z[i]*sin(degreesToRadians(45))*cos(degreesToRadians(45)));
-            //std::cout << QString("FW FOS is %1").arg(Fw) + "\n";
-            double unsteadyFOS = determineUnsteadyFOS(totalTime, rainfallDuration, waterWeight, saturatedSoilWeight, degreesToRadians(frictionAngle), degreesToRadians(45), izKsat, Z[i], D_eff);
-            //std::cout << QString("Unsteady FOS is %1").arg(unsteadyFOS) + "\n";
-            xVec.push_back(Ff+Fc-Fw+unsteadyFOS);
-            yVec.push_back(Z[i]);
-        }
-        */
-        ////std::vector<std::vector<double>> fosVector;
 
         float * failureDepthData;
         failureDepthData = new float [GDALGetRasterBandXSize(slopeBand)*GDALGetRasterBandYSize(slopeBand)];

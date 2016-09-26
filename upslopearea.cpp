@@ -1,21 +1,12 @@
 /*
-Created by: Stuart Mead
+  Created by: Stuart Mead
   Creation date: 2014-02-03
-   
-  Revision:       $Revision: $
-  Last changed:   $Date: $
-  Last changed by: Stuart Mead
+  
+  Released under BSD 3 clause.
+  Use it however you want, but I cannot guarantee it is right.
+  Also don't use my name, the name of collaborators and my/their affiliations
+  as endorsement.
 
-  Copyright Risk Frontiers 2014, Faculty of Science, Macquarie University, NSW 2109, Australia.
-
-  For further information, contact:
-          Stuart Mead
-          Building E7A
-          Dept. of Environment & Geography
-          Macquarie University
-          North Ryde NSW 2109
-
-  This copyright notice must be included with all copies of the source code.
 */
 
 #include <cassert>
@@ -86,148 +77,6 @@ namespace RF
     {
     }
         
-/*
-bool checkOutofBounds(int i, int j, int nXsize, int nYsize)
-{
-    if (i >= nYsize)
-        return false;
-    if (i < 0)
-        return false;
-    if (j >= nXsize)
-        return false;
-    if (j < 0)
-        return false;
-    return true;
-}
-*/
-/*
-float upstreamProportion(float* flowWindow, int neighBour, int* ijlookup, int nXsize, int nYsize, float srcNodataValue)
-    {
-    /*
-    0   1   2
-    3   4   5
-    6   7   8
-    */
-/*
-    if (checkOutofBounds(ijlookup[neighBour*2], ijlookup[(neighBour*2)+1], nXsize, nYsize))        
-    {
-        float fDir = flowWindow[(ijlookup[neighBour*2]*nXsize)+ijlookup[(neighBour*2)+1]];
-        int neighbourList[8] = {0,1,2,3,5,6,7,8};
-        int flowCell = neighbourList[neighBour];
-        int quadrantList[8] = {6,5,4,7,3,0,1,2};
-
-
-        //std::cout << QString("Flow direction of cell %1, %2 (window index %3) is %4 radians").arg(ijlookup[neighBour*2]).arg(ijlookup[(neighBour*2)+1]).arg((ijlookup[neighBour*2]*nXsize)+ijlookup[(neighBour*2)+1]).arg(fDir) + "\n";
-        if (fDir == -1 || fDir == srcNodataValue)
-        {
-            return 0.0;
-        }
-        else if (neighbourList[neighBour] != 3 && fDir > quadrantList[neighBour]*M_PI_4 && fDir < (quadrantList[neighBour]+2)*M_PI_4)
-        {
-            if ( fabs(fDir - (quadrantList[neighBour]+1)*M_PI_4) < 1e-06)//is cardinal
-            {
-                return 1.0;
-            }
-            else if (fabs(fDir - (quadrantList[neighBour]+2)*M_PI_4) < 1e-06)//is not our cardinal
-            {
-                return 0.0;
-            }
-            else if (fabs(fDir - quadrantList[neighBour]*M_PI_4) < 1e-06)//is not our cardinal
-            {
-                return 0.0;
-            }
-            else if (fDir - (quadrantList[neighBour]+1)*M_PI_4 < M_PI_4)//is in first
-            {
-                return (fDir-(quadrantList[neighBour]*M_PI_4))/M_PI_4;
-            }
-            else
-            {
-                return (((quadrantList[neighBour]+2)*M_PI_4)-fDir)/M_PI_4;
-            
-            }
-        }
-        else if (neighbourList[neighBour] == 3)
-        {
-            if (fabs(fDir) < 1e-06)//Cardinal 0 degree
-            {
-                return 1.0;
-            }
-            else if (fabs(fDir - 2*M_PI) < 1e-06)//Cardinal 2pi
-            {
-                return 1.0;
-            }
-            else if (fabs(fDir - M_PI_4) < 1e-06)//not our cardinal
-            {
-                return 0.0;
-            }
-            else if (fabs(fDir - 7*M_PI_4) < 1e-06)//not our cardinal
-            {
-                return 0.0;
-            }
-            else if (fDir > 7*M_PI_4)
-            {
-                return (fDir - 2*M_PI)/M_PI_4;
-            }
-            else if (fDir < M_PI_4)
-            {
-                return (M_PI_4 - fDir)/M_PI_4;
-            }
-            else
-            {
-                return 0.0;
-            }
-        }
-        else
-        {
-            return 0.0;
-        }
-    }
-    else
-    {
-        return 0.0;
-    }
-}
-*/
-/*
-void calcUpstreamArea(float* flowWindow, bool* calculated, float* accumulated, double* transform, int i, int j, int xSize, int ySize, float srcNodataValue)
-{
-    if (!calculated[(i*xSize)+j])
-    {
-        if (flowWindow[(i*xSize+j)] == srcNodataValue)
-        {
-            calculated[(i*xSize)+j] = true;
-            accumulated[(i*xSize)+j] = 0;            
-        }
-        else
-        {
-            int algDataIJLookup[8][2] = {i-1,j-1,
-                        i-1,j,
-                        i-1,j+1,
-                        i,j-1,
-                        i,j+1,
-                        i+1,j-1,
-                        i+1,j,
-                        i+1,j+1};
-            float accumupstream = transform[1] * transform[5];//Calculate cell area
-            accumupstream = -accumupstream;
-            for (int neighBour = 0; neighBour < 8; ++neighBour)
-            {
-                if (checkOutofBounds(algDataIJLookup[neighBour][0], algDataIJLookup[neighBour][1], xSize, ySize))
-                {
-                    float flowProp = upstreamProportion(flowWindow, neighBour, *algDataIJLookup, xSize, ySize, srcNodataValue);
-                    if ( flowProp > 0)
-                    {
-                        calcUpstreamArea(flowWindow, calculated, accumulated, transform, algDataIJLookup[neighBour][0], algDataIJLookup[neighBour][1], xSize, ySize, srcNodataValue);
-                        accumupstream += (flowProp*accumulated[(algDataIJLookup[neighBour][0]*xSize)+algDataIJLookup[neighBour][1]]);
-                    }
-                }
-             }
-            accumulated[(i*xSize)+j]=accumupstream;
-            calculated[(i*xSize)+j]=true;
-        }
-    }
-}
-*/
     /**
      *
      */
@@ -275,33 +124,7 @@ void calcUpstreamArea(float* flowWindow, bool* calculated, float* accumulated, d
         
         int xSize = GDALGetRasterBandXSize(fBand);
         int ySize = GDALGetRasterBandYSize(fBand);
-        /*
-        float* accumulation = new float[xSize*ySize];
-        bool* calculated = new bool[xSize*ySize]();
-
-        float* flowWindow = new float[xSize*ySize];
-        
-        GDALRasterIO(fBand, GF_Read,
-                        0,0,
-                        xSize, ySize,
-                        flowWindow,
-                        xSize, ySize,
-                        GDT_Float32,
-                        0,0);
-
-        int neighbourList[8] = {0,1,2,3,5,6,7,8};
-
-        for (int i = 0; i < ySize; ++i)
-        {
-            for (int j = 0; j < xSize; ++j)
-            {
-                calcUpstreamArea(flowWindow, calculated, accumulation, transform, i, j, xSize, ySize, srcNodataValue);
-            }
-        }
-        
-        //GenericRecursiveFlowAlgebraAlg pfnAlg = RecursiveUpstreamFlowAlg;
-        */
-
+      
         accumulationDataset = GDALCreate( GDALGetDatasetDriver(flowDirectionDataset),
                                             slopeName.toLocal8Bit().constData(),
                                             GDALGetRasterXSize(flowDirectionDataset),
@@ -315,23 +138,7 @@ void calcUpstreamArea(float* flowWindow, bool* calculated, float* accumulated, d
         GDALSetRasterNoDataValue(algBand, dstNoDataValue);
 
         GenericRecursiveFlowAlgebraProcessor(fBand, algBand, transform, pfnAlg, pData);
-        /*
-
-        GDALRasterIO(algBand, GF_Write,
-                        0,0,
-                        xSize,ySize,
-                        accumulation,
-                        xSize,ySize,
-                        GDT_Float32,
-                        0,0);
-
-
-        //GenericRecursiveFlowAlgebraProcessor(fBand,algBand,pfnAlg,pData);
-                                            
-        delete[] accumulation;
-        delete[] calculated;
-        delete[] flowWindow;
-        */
+  
         return true;
     }
 

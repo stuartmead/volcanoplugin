@@ -2,21 +2,11 @@
 /*
   Created by: Stuart Mead
   Creation date: 2014-02-03
-   
-  Revision:       $Revision: $
-  Last changed:   $Date: $
-  Last changed by: Stuart Mead
-
-  Copyright Risk Frontiers 2014, Faculty of Science, Macquarie University, NSW 2109, Australia.
-
-  For further information, contact:
-          Stuart Mead
-          Building E7A
-          Dept. of Environment & Geography
-          Macquarie University
-          North Ryde NSW 2109
-
-  This copyright notice must be included with all copies of the source code.
+  
+  Released under BSD 3 clause.
+  Use it however you want, but I cannot guarantee it is right.
+  Also don't use my name, the name of collaborators and my/their affiliations
+  as endorsement.
 
 */
 
@@ -41,11 +31,8 @@ namespace RF
     class VolcanoPluginImpl;
 
     /**
-     * \brief Put a one-line description of your plugin here
+     * \brief Workspace plugin containing GIS utility programs for lahar/volcano research
      *
-     * Add a more detailed description of your plugin here
-     * or remove these lines if the brief description above
-     * is sufficient.
      */
     class RF_API VolcanoPlugin : public CSIRO::Application::WorkspacePlugin
     {

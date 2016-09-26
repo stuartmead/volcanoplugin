@@ -1,21 +1,11 @@
 /*
   Created by: Stuart Mead
   Creation date: 2014-02-03
-   
-  Revision:       $Revision: $
-  Last changed:   $Date: $
-  Last changed by: Stuart Mead
-
-  Copyright Risk Frontiers 2014, Faculty of Science, Macquarie University, NSW 2109, Australia.
-
-  For further information, contact:
-          Stuart Mead
-          Building E7A
-          Dept. of Environment & Geography
-          Macquarie University
-          North Ryde NSW 2109
-
-  This copyright notice must be included with all copies of the source code.
+  
+  Released under BSD 3 clause.
+  Use it however you want, but I cannot guarantee it is right.
+  Also don't use my name, the name of collaborators and my/their affiliations
+  as endorsement.
 
 */
 
@@ -164,8 +154,7 @@ namespace RF
         
             
 
-        //std::cout << QString("Initial X cellsize is %1, initial Y cellsize is %2").arg((xSize/scaleXsize)*transform[1]).arg((ySize/scaleYsize)*-transform[5]) + "\n";
-        std::cout << QString("X cellsize is %1, Y cellsize is %2").arg((sizes[0]/scaleXsize)*transform[1]).arg((sizes[1]/scaleYsize)*-transform[5]) + "\n";
+         std::cout << QString("X cellsize is %1, Y cellsize is %2").arg((sizes[0]/scaleXsize)*transform[1]).arg((sizes[1]/scaleYsize)*-transform[5]) + "\n";
 
         float *data;
         data = new float [scaleYsize*scaleXsize];

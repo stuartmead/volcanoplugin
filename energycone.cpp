@@ -1,21 +1,12 @@
 /*
-Created by: Stuart Mead
+  Created by: Stuart Mead
   Creation date: 2014-02-03
-   
-  Revision:       $Revision: $
-  Last changed:   $Date: $
-  Last changed by: Stuart Mead
+  
+  Released under BSD 3 clause.
+  Use it however you want, but I cannot guarantee it is right.
+  Also don't use my name, the name of collaborators and my/their affiliations
+  as endorsement.
 
-  Copyright Risk Frontiers 2014, Faculty of Science, Macquarie University, NSW 2109, Australia.
-
-  For further information, contact:
-          Stuart Mead
-          Building E7A
-          Dept. of Environment & Geography
-          Macquarie University
-          North Ryde NSW 2109
-
-  This copyright notice must be included with all copies of the source code.
 */
 
 #include <cassert>
@@ -178,9 +169,6 @@ namespace RF
 
         if (xLocation >= 0.0 && yLocation >= 0.0)
         {
-            //cells[0] = (int) floor(invTransform[0] + invTransform[1] * xLocation + invTransform[2] * yLocation);
-            //cells[1] = (int) floor(invTransform[3] + invTransform[4] * xLocation + invTransform[5] * yLocation);
-            //maxElev = elevation[(cells[1]*GDALGetRasterBandXSize(hBand))+cells[0]];
             cells[0] = (int) xLocation;
             cells[1] = (int) yLocation;
             maxElev = elevation[(cells[1]*GDALGetRasterBandXSize(hBand))+cells[0]];
@@ -193,14 +181,13 @@ namespace RF
         {
             int y = floorf(i/GDALGetRasterBandXSize(hBand));
             int x = i - (y*GDALGetRasterBandXSize(hBand));
-            if ((cells[0]-x)+(cells[1]-y)+(maxElev-elevation[i]) <= 0)//Used to be == 0
+            if ((cells[0]-x)+(cells[1]-y)+(maxElev-elevation[i]) <= 0)
             {
                 energyCone[i] = 0.0;//dstNodataValue;
             }
             else
             {
-                //energyCone[i] = ((maxElev- elevation[i])/ecludianDistance(cells[0]*transform[1],-cells[1]*transform[5],maxElev,x*transform[1],-y*transform[5],elevation[i]))*multiplier;
-                energyCone[i] = std::max((float) 0.0, (float) (maxElev - (ecludianDistance(cells[0]*transform[1],-cells[1]*transform[5],maxElev,x*transform[1],-y*transform[5],elevation[i])*multiplier)) - elevation[i]);
+                 energyCone[i] = std::max((float) 0.0, (float) (maxElev - (ecludianDistance(cells[0]*transform[1],-cells[1]*transform[5],maxElev,x*transform[1],-y*transform[5],elevation[i])*multiplier)) - elevation[i]);
             }
             /*
             if (i % 100000 == 0)

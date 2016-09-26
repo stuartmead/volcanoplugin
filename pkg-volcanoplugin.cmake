@@ -1,23 +1,12 @@
-# =========================================================================
+#  Created by: Stuart Mead/Workspace plugin
+#  Creation date: 2014-02-03
+#  
+#  Released under BSD 3 clause.
+#  Use it however you want, but I cannot guarantee it is right.
+#  Also don't use my name, the name of collaborators and my/their affiliations
+#  as endorsement.
 #
-#   Revision:       $Revision: 18437 $
-#   Last changed:   $Date: 2012-01-05 16:21:57 +1100 (Thu, 05 Jan 2012) $
 #
-#   Copyright 2003-2013 by:
-#
-#     Commonwealth Scientific and Industrial Research Organisation (CSIRO)
-#     Division of Computational Informatics
-#
-#     For further information, contact:
-#         CFD (CMIS)
-#         Private Bag 33,
-#         Clayton South MDC,
-#         Clayton, Vic, 3169
-#         AUSTRALIA
-#
-#   This copyright notice must be included with all copies of the source code.
-#
-# ===========================================================================
 
 IF("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" LESS 2.5)
    MESSAGE(FATAL_ERROR "CMake >= 2.6.0 required")

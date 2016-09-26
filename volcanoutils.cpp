@@ -26,21 +26,11 @@
 /*
   Created by: Stuart Mead
   Creation date: 2014-02-03
-   
-  Revision:       $Revision: $
-  Last changed:   $Date: $
-  Last changed by: Stuart Mead
-
-  Copyright Risk Frontiers 2014, Faculty of Science, Macquarie University, NSW 2109, Australia.
-
-  For further information, contact:
-          Stuart Mead
-          Building E7A
-          Dept. of Environment & Geography
-          Macquarie University
-          North Ryde NSW 2109
-
-  This copyright notice must be included with all copies of the source code.
+  
+  Released under BSD 3 clause.
+  Use it however you want, but I cannot guarantee it is right.
+  Also don't use my name, the name of collaborators and my/their affiliations
+  as endorsement.
 
 */
 
@@ -64,6 +54,7 @@
 #ifndef ROOT_2
 #define ROOT_2 sqrtf(2)
 #endif
+
 /*
 ComputeVal: Computes the value using a processing algorithim defined here - checking for nodata
 */
@@ -75,7 +66,6 @@ static float ComputeVal(bool srcNoData, float srcNoDataValue,
 {
     if (srcNoData && ARE_REAL_EQUAL(afWin[4], srcNoDataValue))//Do not calculate if no data  
     {
-        //std::cout << QString("Found a nodata value, skipping") + "\n";
         return dstNoDataValue;
     }
     else 
@@ -88,7 +78,7 @@ static float ComputeVal(bool srcNoData, float srcNoDataValue,
                 {
                     if (computeEdges)
                     {
-                        afWin[k] = afWin[4];//Set the edge to the centre cell value (ok for gradient)
+                        afWin[k] = afWin[4]; //Set the edge to the centre cell value (ok for gradient)
                     }
                     else
                     {
@@ -97,7 +87,7 @@ static float ComputeVal(bool srcNoData, float srcNoDataValue,
                 }
             }
          }
-        return pfnAlg(afWin, dstNoDataValue, pData);//Run the calculations
+        return pfnAlg(afWin, dstNoDataValue, pData); //Run the calculations
     }
 }
 /*
@@ -110,11 +100,11 @@ CPLErr GDALGeneric3x3Processing (GDALRasterBandH srcBand,
                                    bool computeEdges)
 {
     CPLErr eErr;
-    float *pafThreeLineWin;//3 line input buffer
-    float *pafOutputBuf;//1 line dest buffer
-    int i,j;//Cell index
+    float *pafThreeLineWin; //3 line input buffer
+    float *pafOutputBuf; //1 line dest buffer
+    int i,j; //Cell index
 
-    int srcNoData, dstNoData;//Really a bool
+    int srcNoData, dstNoData; //Really a bool
     float srcNoDataValue, dstNoDataValue;
 
     srcNoDataValue = (float) GDALGetRasterNoDataValue(srcBand, &srcNoData);
@@ -125,7 +115,7 @@ CPLErr GDALGeneric3x3Processing (GDALRasterBandH srcBand,
          dstNoDataValue = 0.0;
     }
 
-    int nXSize = GDALGetRasterBandXSize(srcBand);//Get length of raster
+    int nXSize = GDALGetRasterBandXSize(srcBand); //Get length of raster
     int nYSize = GDALGetRasterBandYSize(srcBand);
 
     pafOutputBuf = new float [nXSize];
@@ -151,7 +141,7 @@ CPLErr GDALGeneric3x3Processing (GDALRasterBandH srcBand,
                         0, 0);
     }
 
-    if (computeEdges && nXSize >= 2 && nYSize >=2)//If compute edges is on, we need to interpolate the first line
+    if (computeEdges && nXSize >= 2 && nYSize >=2) //If compute edges is on, we need to interpolate the first line
     {
         for (j=0; j < nXSize; j++)
         {
@@ -382,7 +372,9 @@ float GDALSlopeZevenbergenThorneAlg (float* afWin, float dsNoDataValue, void* pD
     else
         return (float) (100*(sqrt(key) / (2*psData->scale)));
 }
-//Slope
+/*
+Slope data functions
+*/
 void*  GDALCreateSlopeData(double* adfGeoTransform,
                            double scale,
                            int slopeFormat)
@@ -396,8 +388,9 @@ void*  GDALCreateSlopeData(double* adfGeoTransform,
     pData->slopeFormat = slopeFormat;
     return pData;
 }
-
-//Horne like aspect
+/*
+Horne like aspect
+*/
 float GDALAspectAlg (float* afWin, float dstNoDataValue, void* pData)
 {
     const double degreesToRadians = M_PI / 180.0;
@@ -437,7 +430,9 @@ float GDALAspectAlg (float* afWin, float dstNoDataValue, void* pData)
     return aspect;
 }
 
-//Zev-Thorne
+/*
+Zev-Thorne
+*/
 float GDALAspectZevenbergenThorneAlg (float* afWin, float dstNoDataValue, void* pData)
 {
     const double degreesToRadians = M_PI / 180.0;
@@ -486,7 +481,9 @@ void*  GDALCreateAspectData(bool useAngleAsAzimuth)
 }
 
 
-//Curvature
+/*
+Curvature
+*/
 void* GDALCreateCurvatureData(double* adfTransform)
 {
     GDALCurvatureAlgData* pData =
@@ -578,8 +575,9 @@ float GDALCurvatureTangentAlg(float* afWin, float dstNoDataValue, void* pData)
     }
 }
 
-//Flow direction
-
+/*
+Flow direction
+*/
 void* GDALCreateFlowDirectionData(double* adfTransform)
 {
     GDALFlowDirAlgData* pData = (GDALFlowDirAlgData*)CPLMalloc(sizeof(GDALFlowDirAlgData));
@@ -690,23 +688,6 @@ float GDALFlowDirectionInfAlg(float* afWin, float dstNoDataValue, void* pData)
     else
     {
         ccwEastangle = -1;
-        /*std::cout << QString("Undefined flow direction") + "\n";
-        std::cout << QString("Max Slope is %1 on facet %2").arg(maxS).arg(maxFacet) + "\n";
-        for (int i = 0; i < 8; ++i)
-        {
-            std::cout << QString("Facet %1 slope 1 is %2, slope 2 is %3").arg(i).arg(facets[i].s[0]).arg(facets[i].s[1]) + "\n";//SRM
-            std::cout << QString("Facet %1 flow dir is %2, smag is %3").arg(i).arg(facets[i].fdir).arg(facets[i].s_mag) + "\n";//SRM
-        }
-        std::cout << QString("Afwin is:") + "\n";
-        for (int afi = 0; afi < 9; ++afi)
-        {
-            std::cout << QString("%1\t").arg(afWin[afi]);
-            if (afi == 2 || afi == 5)
-            {
-                std::cout << "\n";
-            }
-        }
-        std::cout << "\n";*/
     }
 
     return ccwEastangle;
@@ -808,18 +789,6 @@ float GDALFlowDirection8Alg(float* afWin, float dstNoDataValue, void* pData)
     else if (nNeighbours > 1 && dWDropmax == 0.0)
     {
         //Condition 4 cells - 0 drop cells
-        /*
-        std::cout << QString("Condition 4 cell") + "\n";
-        std::cout << QString("Afwin is:") + "\n";
-        for (int afi = 0; afi < 9; ++afi)
-        {
-            std::cout << QString("%1\t").arg(afWin[afi]);
-            if (afi == 2 || afi == 5)
-            {
-                std::cout << "\n";
-            }
-        }
-        std::cout << "\n";*/
         direction = 0;
         for (int dirIt = 0; dirIt < maxCell.size(); ++dirIt)
         {
