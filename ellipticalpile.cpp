@@ -10,7 +10,6 @@
 
 //OpenCV core for ellipse
 #include "opencv2/imgproc.hpp"
-
 #include "qimage.h"
 
 #include "volcanoplugin.h"
@@ -130,6 +129,7 @@ namespace RF
 
 		hBand = GDALGetRasterBand(baseDataSet, rasterBand);
 
+		
 		/*
 		Coefficients between Pixel Line and Projected (Yp, Xp space)
 		Xp = padfTransform[0] + P*padfTransform[1] + L*padfTransform[2];
@@ -173,7 +173,7 @@ namespace RF
 
 
 		
-		double radAngle = M_PI - (angle * DEG2RAD);
+		double radAngle = (angle * DEG2RAD);
 		double bigA, bigB, z;
 		std::cout << QString("Rotating ellipse by %1 radians.").arg(radAngle) + "\n";
 
@@ -185,12 +185,12 @@ namespace RF
 				if (dataToMat.at<float>(y, x) > 0.0)//value within ellipse
 				{
 					//Work in cell coords
-					double xdistance = abs(pixelCentre.x - x);
-					double ydistance = abs(pixelCentre.y - y);
+					double xdistance = (pixelCentre.x - x);
+					double ydistance = (pixelCentre.y - y);
 
-					//Calculate values A and B (see http://math.stackexchange.com/questions/426150/what-is-the-general-equation-of-the-ellipse-that-is-not-in-the-origin-and-rotate)
+					//Calculate values A and B (Rotation of coordinates (xcos(t)+ysin(t),(ycos(t)-xsin(t))
 					bigA = pow(((xdistance)*cos(radAngle) + (ydistance)*sin(radAngle)), 2) / pow(axes.width, 2);
-					bigB = pow(((xdistance)*sin(radAngle) + (ydistance)*cos(radAngle)), 2) / pow(axes.height, 2);
+					bigB = pow(((ydistance)*cos(radAngle) - (xdistance)*sin(radAngle)), 2) / pow(axes.height, 2);
 					z = sqrt(pow(height, 2)*(1 - bigA - bigB));
 					dataToMat.at<float>(y, x) = (float)z;
 
