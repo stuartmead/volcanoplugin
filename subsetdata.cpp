@@ -45,7 +45,8 @@ namespace RF
         CSIRO::DataExecution::TypedObject< int >           dataXLength_;
         CSIRO::DataExecution::TypedObject< int >           dataYLength_;
         CSIRO::DataExecution::TypedObject< double >        dataScaleFactor_;
-        CSIRO::DataExecution::TypedObject< GDALDatasetH >  dataOutputRaster_;
+		CSIRO::DataExecution::TypedObject< bool >		   dataWriteOut_;
+		CSIRO::DataExecution::TypedObject< GDALDatasetH >  dataOutputRaster_;
         CSIRO::DataExecution::TypedObject< QString >       dataOutputRasterName_;
 
 
@@ -57,6 +58,7 @@ namespace RF
         CSIRO::DataExecution::InputScalar inputXLength_;
         CSIRO::DataExecution::InputScalar inputYLength_;
         CSIRO::DataExecution::InputScalar inputScaleFactor_;
+		CSIRO::DataExecution::InputScalar inputWriteOut_; 
         CSIRO::DataExecution::Output      outputOutputRaster_;
         CSIRO::DataExecution::InputScalar inputOutputRasterName_;
 
@@ -80,6 +82,7 @@ namespace RF
         dataXLength_(),
         dataYLength_(),
         dataScaleFactor_(1.0),
+		dataWriteOut_(false),
         dataOutputRaster_(),
         dataOutputRasterName_(),
         inputGDALDatabase_("GDAL Database", dataGDALDatabase_, op_),
@@ -89,6 +92,7 @@ namespace RF
         inputXLength_("X length", dataXLength_, op_),
         inputYLength_("Y length", dataYLength_, op_),
         inputScaleFactor_("Scale factor", dataScaleFactor_, op_),
+		inputWriteOut_("Write as .ASC file", dataWriteOut_, op_),
         outputOutputRaster_("Output raster", dataOutputRaster_, op_),
         inputOutputRasterName_("Output raster name", dataOutputRasterName_, op_)
     {
@@ -119,10 +123,10 @@ namespace RF
 
         GDALRasterBandH hBand = GDALGetRasterBand(gDALDatabase, rasterNumber);
 
-         double sizes[2];
+        double sizes[2];
         if (xLength <= 0)
         {
-            sizes[0] = GDALGetRasterBandXSize(hBand);
+            sizes[0] = GDALGetRasterBandXSize(hBand) - xOffset;
         }
         else
         {
@@ -131,7 +135,7 @@ namespace RF
 
         if (yLength <= 0)
         {
-            sizes[1] = GDALGetRasterBandYSize(hBand);
+            sizes[1] = GDALGetRasterBandYSize(hBand) - yOffset;
         }
         else
         {
@@ -145,10 +149,7 @@ namespace RF
         double transform[6];
         GDALGetGeoTransform(gDALDatabase,transform);
 
-        
-            
-
-          std::cout << QString("Downscaled X cellsize is %1, Y cellsize is %2").arg((sizes[0]/scaleXsize)*transform[1]).arg((sizes[1]/scaleYsize)*-transform[5]) + "\n";
+        std::cout << QString("Downscaled X cellsize is %1, Y cellsize is %2").arg((sizes[0]/scaleXsize)*transform[1]).arg((sizes[1]/scaleYsize)*-transform[5]) + "\n";
 
         float *data;
         data = new float [scaleYsize*scaleXsize];
@@ -192,6 +193,35 @@ namespace RF
                         GDT_Float32,
                         0,0);
         
+		if (*dataWriteOut_ == true)
+		{
+			std::cout << QString("Writing out tiff grid file.") + "\n";
+			const char *pszFormat = "GTiff";
+			GDALDatasetH ascOut = GDALCreate(GDALGetDriverByName(pszFormat),
+				outputRasterName.append(".tiff").toLocal8Bit().constData(),
+				scaleXsize, scaleYsize,
+				1,
+				GDT_Float32, NULL);
+			GDALRasterBandH ascBand = GDALGetRasterBand(ascOut, 1);
+			//Change the transform
+			transform[0] = transform[0] + xOffset*transform[1]; //X origin is original + xOffset times (orig) cellsize
+			transform[3] = transform[3] + yOffset*transform[5]; //Similar for Y
+			transform[1] = (sizes[0] / scaleXsize)*transform[1]; //Cellsize x
+			transform[5] = (sizes[1] / scaleYsize)*transform[5]; //Cellsize y
+
+			GDALSetGeoTransform(ascOut, transform);
+			GDALSetProjection(ascOut, GDALGetProjectionRef(gDALDatabase));
+			GDALSetRasterNoDataValue(destBand, dstNodataValue);
+
+			GDALRasterIO(ascBand, GF_Write,
+				0, 0,
+				scaleXsize, scaleYsize,
+				data,
+				scaleXsize, scaleYsize,
+				GDT_Float32,
+				0, 0);
+			GDALClose(ascOut);
+		}
 
 
         return true;

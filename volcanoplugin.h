@@ -25,6 +25,8 @@
 
 #include "volcanoplugin_api.h"
 
+#define DEG2RAD M_PI / 180.0
+#define RAD2DEG 180 / M_PI
 
 namespace RF
 {

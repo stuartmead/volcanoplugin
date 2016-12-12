@@ -23,6 +23,7 @@
 #include "gdal.h"
 
 #include "volcanoplugin.h"
+#include "ellipticalpile.h"
 #include "totalupstreamproperty.h"
 #include "getpixelvalue.h"
 #include "uplsopefailurevolume.h"
@@ -57,6 +58,7 @@
 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
+
 
 namespace RF
 {
@@ -150,6 +152,7 @@ namespace RF
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<UplsopeFailureVolume>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<GetPixelValue>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<TotalUpstreamProperty>::getInstance());
+        addFactory(CSIRO::DataExecution::OperationFactoryTraits<EllipticalPile>::getInstance());
 
         // Add your widget factories like this:
         //addFactory( MyNamespace::MyWidgetFactory::getInstance() );

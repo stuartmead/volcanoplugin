@@ -24,7 +24,6 @@
 #include "ogr_spatialref.h"
 
 #include "volcanoplugin.h"
-#include "volcanoplugin.h"
 #include "energycone.h"
 
 

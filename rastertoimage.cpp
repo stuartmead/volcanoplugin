@@ -128,7 +128,7 @@ namespace RF
         double sizes[2];
         if (xSize <= 0)
         {
-            sizes[0] = GDALGetRasterBandXSize(hBand);
+            sizes[0] = GDALGetRasterBandXSize(hBand) - nXOff;
         }
         else
         {
@@ -137,7 +137,7 @@ namespace RF
 
         if (ySize <= 0)
         {
-            sizes[1] = GDALGetRasterBandYSize(hBand);
+            sizes[1] = GDALGetRasterBandYSize(hBand) - nYOff;
         }
         else
         {
@@ -151,10 +151,7 @@ namespace RF
         double transform[6];
         GDALGetGeoTransform(rasterDataset,transform);
 
-        
-            
-
-         std::cout << QString("X cellsize is %1, Y cellsize is %2").arg((sizes[0]/scaleXsize)*transform[1]).arg((sizes[1]/scaleYsize)*-transform[5]) + "\n";
+        std::cout << QString("X cellsize is %1, Y cellsize is %2").arg((sizes[0]/scaleXsize)*transform[1]).arg((sizes[1]/scaleYsize)*-transform[5]) + "\n";
 
         float *data;
         data = new float [scaleYsize*scaleXsize];
