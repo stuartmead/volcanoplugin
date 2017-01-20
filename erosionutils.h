@@ -122,13 +122,6 @@ double determineResponse(double t, double duration, double Z, double D_eff);
 
 double determineUnsteadyFOS(double time, double duration, double waterWeight, double satSoilWeight, double frictionAngleRad, double slopeAngleRad, double IzkSat, double Z, double D_eff);
 
-//Lovingly plagiarised from John Cook.
-double erf(double x);
-
-double erfc(double x);
-
-void testErf();
-
 /**************************************************************
 Upslope failure volume calc
 **************************************************************/
