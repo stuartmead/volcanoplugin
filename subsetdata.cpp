@@ -92,7 +92,7 @@ namespace RF
         inputXLength_("X length", dataXLength_, op_),
         inputYLength_("Y length", dataYLength_, op_),
         inputScaleFactor_("Scale factor", dataScaleFactor_, op_),
-		inputWriteOut_("Write as .ASC file", dataWriteOut_, op_),
+		inputWriteOut_("Write as .tiff file", dataWriteOut_, op_),
         outputOutputRaster_("Output raster", dataOutputRaster_, op_),
         inputOutputRasterName_("Output raster name", dataOutputRasterName_, op_)
     {
@@ -148,15 +148,31 @@ namespace RF
 
         double transform[6];
         GDALGetGeoTransform(gDALDatabase,transform);
+		
+		/*
+		//Geotransform to convert from cellspace (P,L) to geographical space
+		//Xp = padfTransform[0] + P*padfTransform[1] + L*padfTransform[2]; 
+		//Yp = padfTransform[3] + P*padfTransform[4] + L*padfTransform[5];
+		In a north up image, padfTransform[1] is the pixel width, and 
+		padfTransform[5] is the pixel height. 
+		The upper left corner of the upper left pixel is at 
+		position (padfTransform[0],padfTransform[3]).
+		*/
 
         std::cout << QString("Downscaled X cellsize is %1, Y cellsize is %2").arg((sizes[0]/scaleXsize)*transform[1]).arg((sizes[1]/scaleYsize)*-transform[5]) + "\n";
+
+		//Change the transform
+		transform[0] = transform[0] + xOffset*transform[1]; //X origin is original + xOffset times (orig) cellsize
+		transform[3] = transform[3] + yOffset*transform[5]; //Similar for Y
+		transform[1] = (sizes[0] / scaleXsize)*transform[1]; //Cellsize x
+		transform[5] = (sizes[1] / scaleYsize)*transform[5]; //Cellsize y
+
 
         float *data;
         data = new float [scaleYsize*scaleXsize];
 
         std::cout << QString("Raster type is %1").arg(GDALGetDataTypeName(GDALGetRasterDataType(hBand))) + "\n";
-
-
+		
 
 
         GDALRasterIO(hBand, GF_Read,
@@ -167,7 +183,7 @@ namespace RF
             GDT_Float32, //Type
             0, 0);//Scanline stuff (for interleaving)
 
-        
+		      
 
         //Now write data to new raster
         outputRaster = GDALCreate( GDALGetDatasetDriver(gDALDatabase),
@@ -181,7 +197,7 @@ namespace RF
 
         dstNodataValue = GDALGetRasterNoDataValue(hBand, &srcNoData);
         GDALRasterBandH destBand = GDALGetRasterBand(outputRaster, 1);
-        GDALSetGeoTransform(outputRaster, transform);
+		GDALSetGeoTransform(outputRaster, transform);
         GDALSetProjection(outputRaster, GDALGetProjectionRef(gDALDatabase));
         GDALSetRasterNoDataValue(destBand, dstNodataValue);
 
@@ -203,11 +219,7 @@ namespace RF
 				1,
 				GDT_Float32, NULL);
 			GDALRasterBandH ascBand = GDALGetRasterBand(ascOut, 1);
-			//Change the transform
-			transform[0] = transform[0] + xOffset*transform[1]; //X origin is original + xOffset times (orig) cellsize
-			transform[3] = transform[3] + yOffset*transform[5]; //Similar for Y
-			transform[1] = (sizes[0] / scaleXsize)*transform[1]; //Cellsize x
-			transform[5] = (sizes[1] / scaleYsize)*transform[5]; //Cellsize y
+
 
 			GDALSetGeoTransform(ascOut, transform);
 			GDALSetProjection(ascOut, GDALGetProjectionRef(gDALDatabase));

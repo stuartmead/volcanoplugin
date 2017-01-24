@@ -183,8 +183,7 @@ namespace RF
             }
         }
 
-        delete[] data;
-
+        
 
 
         return true;

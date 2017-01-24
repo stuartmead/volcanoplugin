@@ -171,7 +171,7 @@ namespace RF
             cells[0] = (int) xLocation;
             cells[1] = (int) yLocation;
             maxElev = elevation[(cells[1]*GDALGetRasterBandXSize(hBand))+cells[0]];
-            std::cout << QString("Max elevation is %1 at cell %2, %3").arg(maxElev).arg(cells[0]).arg(cells[1]) + "\n";
+            std::cout << QString("Elevation is %1 at cell %2, %3").arg(maxElev).arg(cells[0]).arg(cells[1]) + "\n";
         }
        
         maxElev = maxElev + *dataAddHeight_;
