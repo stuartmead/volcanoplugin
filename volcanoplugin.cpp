@@ -23,6 +23,7 @@
 #include "gdal.h"
 
 #include "volcanoplugin.h"
+#include "energyconoid.h"
 #include "ellipticalpile.h"
 #include "totalupstreamproperty.h"
 #include "getpixelvalue.h"
@@ -153,6 +154,7 @@ namespace RF
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<GetPixelValue>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<TotalUpstreamProperty>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<EllipticalPile>::getInstance());
+        addFactory(CSIRO::DataExecution::OperationFactoryTraits<EnergyConoid>::getInstance());
 
         // Add your widget factories like this:
         //addFactory( MyNamespace::MyWidgetFactory::getInstance() );
