@@ -50,10 +50,14 @@ namespace RF
 		CSIRO::DataExecution::TypedObject< double >        dataAtmosphereDensity_;
 		CSIRO::DataExecution::TypedObject< double >        dataXLocation_;
 		CSIRO::DataExecution::TypedObject< double >        dataYLocation_;
+		CSIRO::DataExecution::TypedObject< bool >		   dataAxisymmetric_;
+		CSIRO::DataExecution::TypedObject< double >		   dataRotation_;
 		CSIRO::DataExecution::TypedObject< QString >       dataOutputRasterName_;
 		CSIRO::DataExecution::TypedObject< GDALDatasetH >  dataOutputRaster_;
 		CSIRO::DataExecution::TypedObject< int >           dataRasterBand_;
-
+		CSIRO::DataExecution::TypedObject< double >		   dataReducedGravity_;
+		CSIRO::DataExecution::TypedObject< double >		   dataImax_;
+		CSIRO::DataExecution::TypedObject< double >		   dataLambda_;
 
 		// Inputs and outputs
 		CSIRO::DataExecution::InputScalar inputElevationDataset_;
@@ -65,9 +69,14 @@ namespace RF
 		CSIRO::DataExecution::InputScalar inputAtmosphereDensity_;
 		CSIRO::DataExecution::InputScalar inputXLocation_;
 		CSIRO::DataExecution::InputScalar inputYLocation_;
+		CSIRO::DataExecution::InputScalar inputAxisymmetric_;
+		CSIRO::DataExecution::InputScalar inputRotation_;
 		CSIRO::DataExecution::InputScalar inputOutputRasterName_;
 		CSIRO::DataExecution::Output      outputOutputRaster_;
 		CSIRO::DataExecution::InputScalar inputRasterBand_;
+		CSIRO::DataExecution::Output	  outputReducedGravity_;
+		CSIRO::DataExecution::Output	  outputImax_;
+		CSIRO::DataExecution::Output	  outputLambda_;
 
         EnergyConoidImpl(EnergyConoid& op);
 
@@ -90,27 +99,37 @@ namespace RF
 		dataAtmosphereDensity_(1.225),
 		dataXLocation_(-1.0),
 		dataYLocation_(-1.0),
+		dataAxisymmetric_(true),
+		dataRotation_(1.0),
 		dataOutputRasterName_(),
 		dataOutputRaster_(),
 		dataRasterBand_(1),
+		dataReducedGravity_(),
+		dataLambda_(),
+		dataImax_(),
 		inputElevationDataset_("Elevation Dataset", dataElevationDataset_, op_),
 		inputSettlingVelocity_("Settling velocity", dataSettlingVelocity_, op_),
 		inputFroude_("Froude number", dataFroude_, op_),
 		inputConcentration_("Particle concentration", dataConcentration_, op_),
-		inputVolume_("Total volume", dataVolume_, op_),
+		inputVolume_("Total volume per sector", dataVolume_, op_),
+		inputRotation_("Number of collapse sectors", dataRotation_, op_),
 		inputParticleDensity_("Particle density", dataParticleDensity_, op_),
 		inputAtmosphereDensity_("Atmosphere density", dataAtmosphereDensity_, op_),
 		inputXLocation_("X location", dataXLocation_, op_),
 		inputYLocation_("Y location", dataYLocation_, op_),
+		inputAxisymmetric_("Axisymmetric current", dataAxisymmetric_, op_),
 		inputOutputRasterName_("Output Raster name", dataOutputRasterName_, op_),
 		outputOutputRaster_("Output Raster", dataOutputRaster_, op_),
+		outputReducedGravity_("Reduced gravity", dataReducedGravity_, op_),
+		outputLambda_("Lambda value", dataLambda_, op_),
+		outputImax_("Maximum runout", dataImax_, op_),
 		inputRasterBand_("Raster Band", dataRasterBand_, op_)
     {
         // Make sure all of our inputs have data by default. If your operation accepts a
         // large data structure as input, you may wish to remove this call and replace it
         // with constructors for each input in the initialisation list above.
         op_.ensureHasData();
-
+		inputVolume_.setDescription(tr("Total volume of released material, this is equivalent to 2*PI*(volume/radian)"));
         // Recommend setting a description of the operation and each input / output here:
         // op_.setDescription(tr("My operation does this, that and this other thing."));
         // input1_.input_.setDescription(tr("Used for such and such."));
@@ -178,25 +197,39 @@ namespace RF
 		//NOTE: In Esposti Ongaro, gp' is defined as g'= phi[(rho_p - rho_a)/rho_a]g = phi*gp'
 		//Dividing by phi, you get gp = [(rho_p - rho_a)/rho_a]*g, the same as Hallworth et al. (1998)
 		double gravity = 9.807;
-		double gp = ((*dataParticleDensity_ - *dataAtmosphereDensity_) / *dataAtmosphereDensity_);
+		double gp = ((*dataParticleDensity_ - *dataAtmosphereDensity_) / *dataAtmosphereDensity_)*gravity;
+
+		*dataReducedGravity_ = gp;
 
 		//lambda, a constant relating the reduction in particle concentration to distance
 		//Eq. 5 in Esposito Ongaro
-		//Need to use 2/3 * vol - essentially assuming a square
-		//double lambda = *dataSettlingVelocity_ / (*dataFroude_ * sqrt(pow(*dataVolume_, 2.0 / 3.0)*gp));
+		double A = *dataVolume_ / ((2 * M_PI) / *dataRotation_);
+		double lambda = *dataSettlingVelocity_ / (*dataFroude_ * sqrt(pow(A, 3.0)*gp)); 
+
+		if (*dataAxisymmetric_)
+		{
+			lambda = *dataSettlingVelocity_ / (*dataFroude_ * sqrt(pow(2 * A, 3.0)*gp)); //Equation B.11
+		}
+
+		*dataLambda_ = lambda;
 
 		//Imax, the current runout in Cylindrical co-ords
-		//Eq. 6 in Esposito Ongaro (cartesian) double Imax = pow((5 * sqrt(*dataConcentration_)) / lambda, 2.0 / 5.0);
-		//Using Neri's
-		double Imax = pow(8 * sqrt(*dataConcentration_)* *dataFroude_ * sqrt(gp) * pow(*dataVolume_, 3.0 / 2.0)* pow(*dataSettlingVelocity_, -1.0), 1.0 / 4.0);
+		//Eq. 6 in Esposito Ongaro (cartesian) 
+		double Imax = pow((5 * sqrt(*dataConcentration_)) / lambda, 2.0 / 5.0);
+		
 
+		if (*dataAxisymmetric_)
+		{
+			Imax = pow((8 * sqrt(*dataConcentration_)) / lambda , 1.0 / 4.0);
+		}
 		std::cout << QString("Maximum runout is %1 metres.").arg(Imax) + "\n";
 
-		//C, a decay constant
-		//Eq. 13 in Esposito Ongaro	double C = pow(*dataSettlingVelocity_, 1.0 / 3.0)*pow(*dataFroude_, 2.0 / 3.0)*pow(*dataConcentration_, 1.0 / 3.0)*pow(gp, 1.0 / 3.0);
-		//Using Neri's 
-		double C = pow(*dataFroude_ * *dataFroude_ * *dataSettlingVelocity_ * *dataConcentration_ * gp, 1.0 / 3.0) / 2;
+		*dataImax_ = Imax;
 
+		
+		//C, a decay constant
+		//Eq. 13 in Esposito Ongaro	
+		double C = pow(*dataSettlingVelocity_, 1.0 / 3.0)*pow(*dataFroude_, 2.0 / 3.0)*pow(*dataConcentration_, 1.0 / 3.0)*pow(gp, 1.0 / 3.0);
 		
 		/*
 		STOP - Get constants for energy conoid model
@@ -242,13 +275,14 @@ namespace RF
 
 			//Distance (x/Imax)
 			double dist = ecludianDistance2D(*dataXLocation_, *dataYLocation_, xl, yl) / Imax;
-
-			//Calc x cosh^2 arctanh(x^2) = x / 1 - x^4
-			double denom = dist / (1 - pow(dist, 4.0));
-
-			double hmax = (1 / (2 * gravity)) * pow((C * pow(Imax, 1.0 / 3.0) ) / dist , 2.0);
+		
+			//Espositi Ongaro formulation for hmax (Eq. 11)
+			//NOTE: The deonominator is x cosh(arctanh(x^2) as opposed to xcosh^2(arctanh(x^2)) in Neri,
+			//	this makes the denominator x / sqrt(1-x^4)
+			double denom = dist / sqrt(1 - pow(dist, 4.0));
+			double hmax = (1 / (2 * gravity)) * pow(pow(8, -1.0 / 3.0) * C * pow(Imax, 1.0 / 3.0) * (1 / denom), 2.0);
 			
-			energyConoid[i] = (float)std::max(0.0, hmax - pixElev - elevation[i]); //(float)std::max(0.0, hmax - fabs(elevation[i] - pixElev));
+			energyConoid[i] = std::max(0.0, hmax - std::max((double)elevation[i] - pixElev, 0.0));
 
 		}
 
