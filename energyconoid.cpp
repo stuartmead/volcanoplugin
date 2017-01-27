@@ -54,10 +54,10 @@ namespace RF
 		CSIRO::DataExecution::TypedObject< double >		   dataRotation_;
 		CSIRO::DataExecution::TypedObject< QString >       dataOutputRasterName_;
 		CSIRO::DataExecution::TypedObject< GDALDatasetH >  dataOutputRaster_;
+		CSIRO::DataExecution::TypedObject< GDALDatasetH >  dataEnergyConoid_;
 		CSIRO::DataExecution::TypedObject< int >           dataRasterBand_;
 		CSIRO::DataExecution::TypedObject< double >		   dataReducedGravity_;
 		CSIRO::DataExecution::TypedObject< double >		   dataImax_;
-		CSIRO::DataExecution::TypedObject< double >		   dataLambda_;
 
 		// Inputs and outputs
 		CSIRO::DataExecution::InputScalar inputElevationDataset_;
@@ -73,10 +73,10 @@ namespace RF
 		CSIRO::DataExecution::InputScalar inputRotation_;
 		CSIRO::DataExecution::InputScalar inputOutputRasterName_;
 		CSIRO::DataExecution::Output      outputOutputRaster_;
+		CSIRO::DataExecution::Output	  outputEnergyConoid_;
 		CSIRO::DataExecution::InputScalar inputRasterBand_;
 		CSIRO::DataExecution::Output	  outputReducedGravity_;
 		CSIRO::DataExecution::Output	  outputImax_;
-		CSIRO::DataExecution::Output	  outputLambda_;
 
         EnergyConoidImpl(EnergyConoid& op);
 
@@ -103,15 +103,15 @@ namespace RF
 		dataRotation_(1.0),
 		dataOutputRasterName_(),
 		dataOutputRaster_(),
+		dataEnergyConoid_(),
 		dataRasterBand_(1),
 		dataReducedGravity_(),
-		dataLambda_(),
 		dataImax_(),
 		inputElevationDataset_("Elevation Dataset", dataElevationDataset_, op_),
 		inputSettlingVelocity_("Settling velocity", dataSettlingVelocity_, op_),
 		inputFroude_("Froude number", dataFroude_, op_),
 		inputConcentration_("Particle concentration", dataConcentration_, op_),
-		inputVolume_("Total volume per sector", dataVolume_, op_),
+		inputVolume_("Total volume", dataVolume_, op_),
 		inputRotation_("Number of collapse sectors", dataRotation_, op_),
 		inputParticleDensity_("Particle density", dataParticleDensity_, op_),
 		inputAtmosphereDensity_("Atmosphere density", dataAtmosphereDensity_, op_),
@@ -120,8 +120,8 @@ namespace RF
 		inputAxisymmetric_("Axisymmetric current", dataAxisymmetric_, op_),
 		inputOutputRasterName_("Output Raster name", dataOutputRasterName_, op_),
 		outputOutputRaster_("Output Raster", dataOutputRaster_, op_),
+		outputEnergyConoid_("Energy conoid", dataEnergyConoid_, op_),
 		outputReducedGravity_("Reduced gravity", dataReducedGravity_, op_),
-		outputLambda_("Lambda value", dataLambda_, op_),
 		outputImax_("Maximum runout", dataImax_, op_),
 		inputRasterBand_("Raster Band", dataRasterBand_, op_)
     {
@@ -129,7 +129,9 @@ namespace RF
         // large data structure as input, you may wish to remove this call and replace it
         // with constructors for each input in the initialisation list above.
         op_.ensureHasData();
-		inputVolume_.setDescription(tr("Total volume of released material, this is equivalent to 2*PI*(volume/radian)"));
+		inputVolume_.setDescription(tr("Total volume of released material"));
+		inputRotation_.setDescription(tr("Numer of collapse sectors radially, volume per \
+					sector will be calculated as Vol/(2pi/N), where N is the number of sectors"));
         // Recommend setting a description of the operation and each input / output here:
         // op_.setDescription(tr("My operation does this, that and this other thing."));
         // input1_.input_.setDescription(tr("Used for such and such."));
@@ -144,6 +146,33 @@ namespace RF
 	float ecludianDistance2D(float X, float Y, float x, float y)
 	{
 		return sqrt(pow(fabs(X - x), 2) + pow(fabs(Y - y), 2));
+	}
+
+	double l_max(double phi, double fr, double A, double w_s, double g_p, bool axisymmetric = true)
+	{
+		if (axisymmetric)
+		{
+			return{
+				pow((8 * sqrt(phi)) /
+				(pow(fr*sqrt(g_p*pow(2 * A,3.0)),-1.0)*w_s), 1.0/4.0)
+			};
+		}
+		else
+		{
+			return{
+				pow((5 * sqrt(phi)) /
+				(pow(fr*sqrt(g_p*pow(A,3.0)),-1.0)*w_s), 2.0 / 5.0)
+			};
+		}
+	}
+
+	double h_max_cyl(double grav, double C, double linf, double x) //Cylindrical h_max
+	{
+		return{
+			(1 / (2 * grav))*
+			pow(0.5*C*pow(linf, 1.0 / 3.0)*(sqrt(1 - pow(x,4.0)) / x)
+				,2.0)
+		};
 	}
 	
     bool EnergyConoidImpl::execute()
@@ -187,8 +216,6 @@ namespace RF
 			density current kinematics and hazard' JVGR 327, pp. 257-272
 
 		gp' = [(rho_p - rho_a)/rho_a]*g
-		lambda = w_s/Fr(A^3gp')^1/2
-		Imax = (5*phi^1/2/lambda)^2/5
 		C = ws^1/3*Fr^2/3*phi^1/3*gp'^1/3
 		*/
 
@@ -201,36 +228,20 @@ namespace RF
 
 		*dataReducedGravity_ = gp;
 
-		//lambda, a constant relating the reduction in particle concentration to distance
-		//Eq. 5 in Esposito Ongaro
+
 		double A = *dataVolume_ / ((2 * M_PI) / *dataRotation_);
-		double lambda = *dataSettlingVelocity_ / (*dataFroude_ * sqrt(pow(A, 3.0)*gp)); 
 
-		if (*dataAxisymmetric_)
-		{
-			lambda = *dataSettlingVelocity_ / (*dataFroude_ * sqrt(pow(2 * A, 3.0)*gp)); //Equation B.11
-		}
-
-		*dataLambda_ = lambda;
-
-		//Imax, the current runout in Cylindrical co-ords
-		//Eq. 6 in Esposito Ongaro (cartesian) 
-		double Imax = pow((5 * sqrt(*dataConcentration_)) / lambda, 2.0 / 5.0);
-		
-
-		if (*dataAxisymmetric_)
-		{
-			Imax = pow((8 * sqrt(*dataConcentration_)) / lambda , 1.0 / 4.0);
-		}
-		std::cout << QString("Maximum runout is %1 metres.").arg(Imax) + "\n";
-
-		*dataImax_ = Imax;
-
-		
 		//C, a decay constant
 		//Eq. 13 in Esposito Ongaro	
 		double C = pow(*dataSettlingVelocity_, 1.0 / 3.0)*pow(*dataFroude_, 2.0 / 3.0)*pow(*dataConcentration_, 1.0 / 3.0)*pow(gp, 1.0 / 3.0);
-		
+
+		//Calculate lmax
+		double lmax = l_max(*dataConcentration_, *dataFroude_, A, *dataSettlingVelocity_, gp, *dataAxisymmetric_);
+
+		std::cout << QString("Maximum runout is %1 metres.").arg(lmax) + "\n";
+
+		*dataImax_ = lmax;
+							
 		/*
 		STOP - Get constants for energy conoid model
 		*/
@@ -240,6 +251,8 @@ namespace RF
 		*/
 		float * energyConoid;
 		energyConoid = new float[GDALGetRasterBandXSize(hBand)*GDALGetRasterBandYSize(hBand)];
+		float * elevDiff;
+		elevDiff = new float[GDALGetRasterBandXSize(hBand)*GDALGetRasterBandYSize(hBand)];
 
 		//Get geotransform to convert from cellspace (P,L) to geographical space
 		//Xp = padfTransform[0] + P*padfTransform[1] + L*padfTransform[2]; 
@@ -273,16 +286,11 @@ namespace RF
 			double xl = transform[0] + P*transform[1] + L*transform[2];
 			double yl = transform[3] + P*transform[4] + L*transform[5];
 
-			//Distance (x/Imax)
-			double dist = ecludianDistance2D(*dataXLocation_, *dataYLocation_, xl, yl) / Imax;
+			//Distance (x/lmax)
+			double dist = ecludianDistance2D(*dataXLocation_, *dataYLocation_, xl, yl) / lmax;
 		
-			//Espositi Ongaro formulation for hmax (Eq. 11)
-			//NOTE: The deonominator is x cosh(arctanh(x^2) as opposed to xcosh^2(arctanh(x^2)) in Neri,
-			//	this makes the denominator x / sqrt(1-x^4)
-			double denom = dist / sqrt(1 - pow(dist, 4.0));
-			double hmax = (1 / (2 * gravity)) * pow(pow(8, -1.0 / 3.0) * C * pow(Imax, 1.0 / 3.0) * (1 / denom), 2.0);
-			
-			energyConoid[i] = std::max(0.0, hmax - std::max((double)elevation[i] - pixElev, 0.0));
+			energyConoid[i] = h_max_cyl(gravity, C, lmax, dist);
+			elevDiff[i] = (float) std::max(0.0, (double) energyConoid[i] - elevation[i]);
 
 		}
 
@@ -294,9 +302,21 @@ namespace RF
 			GDT_Float32,
 			NULL);
 
+		GDALDatasetH& conoidRaster = *dataEnergyConoid_;
+		conoidRaster = GDALCreate(GDALGetDatasetDriver(elevationDataset),
+			"energy_conoid",
+			GDALGetRasterXSize(elevationDataset),
+			GDALGetRasterYSize(elevationDataset),
+			1,
+			GDT_Float32,
+			NULL);
+
+
 		GDALRasterBandH destBand = GDALGetRasterBand(outputRaster, 1);
 		GDALSetGeoTransform(outputRaster, transform);
 
+		GDALRasterBandH conoidDestBand = GDALGetRasterBand(conoidRaster, 1);
+		GDALSetGeoTransform(conoidRaster, transform);
 
 		if (GDALSetProjection(outputRaster, GDALGetProjectionRef(elevationDataset)) != CE_None)
 		{
@@ -313,16 +333,39 @@ namespace RF
 			}
 		}
 
+		if (GDALSetProjection(conoidRaster, GDALGetProjectionRef(elevationDataset)) != CE_None)
+		{
+			std::cout << QString("WARNING: Output projection cannot be set, setting to WGS84") + "\n";
+			OGRSpatialReferenceH hSRS;
+			hSRS = OSRNewSpatialReference(NULL);
+			OSRSetWellKnownGeogCS(hSRS, "WGS84");
+			char *gsR = NULL;
+			OSRExportToWkt(hSRS, &gsR);
+			if (GDALSetProjection(conoidRaster, gsR) != CE_None)
+			{
+				std::cout << QString("ERROR: Could not set projection to WGS84") + "\n";
+				return false;
+			}
+		}
+
 		GDALSetRasterNoDataValue(destBand, dstNodataValue);
+		GDALSetRasterNoDataValue(conoidDestBand, dstNodataValue);
 
 		GDALRasterIO(destBand, GF_Write,
+			0, 0,
+			GDALGetRasterBandXSize(hBand), GDALGetRasterBandYSize(hBand),
+			elevDiff,
+			GDALGetRasterBandXSize(hBand), GDALGetRasterBandYSize(hBand),
+			GDT_Float32,
+			0, 0);
+
+		GDALRasterIO(conoidDestBand, GF_Write,
 			0, 0,
 			GDALGetRasterBandXSize(hBand), GDALGetRasterBandYSize(hBand),
 			energyConoid,
 			GDALGetRasterBandXSize(hBand), GDALGetRasterBandYSize(hBand),
 			GDT_Float32,
 			0, 0);
-
  
         return true;
     }
