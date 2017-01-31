@@ -58,6 +58,7 @@ namespace RF
 		CSIRO::DataExecution::TypedObject< GDALDatasetH >  dataOutputRaster_;
 		CSIRO::DataExecution::TypedObject< GDALDatasetH >  dataEnergyConoid_;
 		CSIRO::DataExecution::TypedObject< GDALDatasetH >  dataDyPressure_;
+		CSIRO::DataExecution::TypedObject< GDALDatasetH >  dataDepositMass_;
 		CSIRO::DataExecution::TypedObject< int >           dataRasterBand_;
 		CSIRO::DataExecution::TypedObject< double >		   dataReducedGravity_;
 		CSIRO::DataExecution::TypedObject< double >		   dataImax_;
@@ -79,6 +80,7 @@ namespace RF
 		CSIRO::DataExecution::Output      outputOutputRaster_;
 		CSIRO::DataExecution::Output	  outputEnergyConoid_;
 		CSIRO::DataExecution::Output	  outputDyPressure_;
+		CSIRO::DataExecution::Output	  outputDepositMass_;
 		CSIRO::DataExecution::InputScalar inputRasterBand_;
 		CSIRO::DataExecution::Output	  outputReducedGravity_;
 		CSIRO::DataExecution::Output	  outputImax_;
@@ -111,6 +113,7 @@ namespace RF
 		dataOutputRaster_(),
 		dataEnergyConoid_(),
 		dataDyPressure_(),
+		dataDepositMass_(),
 		dataRasterBand_(1),
 		dataReducedGravity_(),
 		dataImax_(),
@@ -130,6 +133,7 @@ namespace RF
 		outputOutputRaster_("Output Raster", dataOutputRaster_, op_),
 		outputEnergyConoid_("Energy conoid", dataEnergyConoid_, op_),
 		outputDyPressure_("Dynamic pressure", dataDyPressure_, op_),
+		outputDepositMass_("Deposit mass", dataDepositMass_, op_),
 		outputReducedGravity_("Reduced gravity", dataReducedGravity_, op_),
 		outputImax_("Maximum runout", dataImax_, op_),
 		inputRasterBand_("Raster Band", dataRasterBand_, op_)
@@ -247,6 +251,8 @@ namespace RF
 		elevDiff = new float[GDALGetRasterXSize(elevationDataset)*GDALGetRasterYSize(elevationDataset)];
 		float * dyPressure;
 		dyPressure = new float[GDALGetRasterXSize(elevationDataset)*GDALGetRasterYSize(elevationDataset)];
+		float * depositMass;
+		depositMass = new float[GDALGetRasterXSize(elevationDataset)*GDALGetRasterYSize(elevationDataset)];
 
 		//Get geotransform to convert from cellspace (P,L) to geographical space
 		//Xp = padfTransform[0] + P*padfTransform[1] + L*padfTransform[2]; 
@@ -295,10 +301,24 @@ namespace RF
 			//((*dataConcentration_* *dataParticleDensity_)+((1-*dataConcentration_) * *dataAtmosphereDensity_))*gravity*std::max((float) 0.0, energyConoid[i]);
 			dyPressure[i] = (std::max((float) 0.0, energyConoid[i]) * 2 * gravity) * 0.5 * ((*dataConcentration_* *dataParticleDensity_) +
 				((1 - *dataConcentration_) * *dataAtmosphereDensity_));
+
+			//Deposit mass for axisymmetric currents, eq. B.10 Esposti Ongaro
+			double lambda_c = *dataSettlingVelocity_ / (*dataFroude_*sqrt(pow(2 * A, 3.0)*gp));
+			depositMass[i] = pow(sqrt(*dataConcentration_) - (0.125*lambda_c*pow(std::min(dist, 1.0)*lmax, 4.0))
+				, 2.0);
 		}
 		
 		outputRaster = GDALCreate(GDALGetDatasetDriver(elevationDataset),
 			outputRasterName.toLocal8Bit().constData(),
+			GDALGetRasterXSize(elevationDataset),
+			GDALGetRasterYSize(elevationDataset),
+			1,
+			GDT_Float32,
+			NULL);
+
+		GDALDatasetH& massRaster = *dataDepositMass_;
+		massRaster = GDALCreate(GDALGetDatasetDriver(elevationDataset),
+			"deposit_mass",
 			GDALGetRasterXSize(elevationDataset),
 			GDALGetRasterYSize(elevationDataset),
 			1,
@@ -332,6 +352,10 @@ namespace RF
 
 		GDALRasterBandH dyPressureBand = GDALGetRasterBand(dynamicPressureRaster, 1);
 		GDALSetGeoTransform(dynamicPressureRaster, transform);
+
+		GDALRasterBandH depositMassBand = GDALGetRasterBand(massRaster, 1);
+		GDALSetGeoTransform(massRaster, transform);
+		GDALSetProjection(massRaster, GDALGetProjectionRef(elevationDataset));
 
 		if (GDALSetProjection(outputRaster, GDALGetProjectionRef(elevationDataset)) != CE_None)
 		{
@@ -382,6 +406,15 @@ namespace RF
 		GDALSetRasterNoDataValue(destBand, dstNodataValue);
 		GDALSetRasterNoDataValue(conoidDestBand, dstNodataValue);
 		GDALSetRasterNoDataValue(dyPressureBand, dstNodataValue);
+		GDALSetRasterNoDataValue(depositMassBand, dstNodataValue);
+
+		GDALRasterIO(depositMassBand, GF_Write,
+			0, 0,
+			GDALGetRasterXSize(elevationDataset), GDALGetRasterYSize(elevationDataset),
+			depositMass,
+			GDALGetRasterXSize(elevationDataset), GDALGetRasterYSize(elevationDataset),
+			GDT_Float32,
+			0, 0);
 
 		GDALRasterIO(destBand, GF_Write,
 			0, 0,
