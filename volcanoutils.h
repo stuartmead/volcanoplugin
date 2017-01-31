@@ -125,6 +125,7 @@ CPLErr GDALGeneric3x3Processing (GDALRasterBandH srcBand,
 float * getRasterData(GDALDatasetH raster, float dstNodataValue,
 	int xOffset = 0, int yOffset = 0, int xLength = 0, int yLength = 0, double scaleFactor = 1.0, int bandNo = 1);
 
+
 /***************************************
 SLOPE
 ***************************************/

@@ -193,50 +193,7 @@ namespace RF
 		int&          rasterBand = *dataRasterBand_;
 
 		GDALAllRegister();
-
-		/*
-
-		if (rasterBand > GDALGetRasterCount(elevationDataset))
-		{
-			std::cout << QString("ERROR: Not enough raster bands, number of bands is %1, band selected is %2").arg(GDALGetRasterCount(elevationDataset)).arg(rasterBand) + "\n";
-		}
-
-
-
-		GDALRasterBandH hBand, sBand;
-		hBand = GDALGetRasterBand(elevationDataset, rasterBand);
-		float * elevation;
-		elevation = new float[GDALGetRasterBandXSize(hBand)*GDALGetRasterBandYSize(hBand)];
-
-		GDALRasterIO(hBand, GF_Read,
-			0, 0,
-			GDALGetRasterBandXSize(hBand), GDALGetRasterBandYSize(hBand),
-			elevation,
-			GDALGetRasterBandXSize(hBand), GDALGetRasterBandYSize(hBand),
-			GDT_Float32,
-			0, 0);
-
-		float dstNodataValue;
-
-		dstNodataValue = (float)GDALGetRasterNoDataValue(hBand, NULL);
-		std::cout << QString("Input nodata value for energy cone is %1").arg(dstNodataValue) + "\n";
-
-
-		float * slope;
-		if (inputSlopeDataset_.connected())
-		{
-			sBand = GDALGetRasterBand(*dataSlopeDataset_, rasterBand);
-			slope = new float[GDALGetRasterBandXSize(sBand)*GDALGetRasterBandYSize(sBand)];
-			GDALRasterIO(sBand, GF_Read,
-				0, 0,
-				GDALGetRasterBandXSize(sBand), GDALGetRasterBandYSize(sBand),
-				slope,
-				GDALGetRasterBandXSize(sBand), GDALGetRasterBandYSize(sBand),
-				GDT_Float32,
-				0, 0);
-		}
-		*/
-
+		
 		float dstNodataValue;
 		float * elevation = getRasterData(elevationDataset, dstNodataValue);
 
@@ -245,25 +202,7 @@ namespace RF
 		{
 			slope = getRasterData(*dataSlopeDataset_, dstNodataValue);
 		}
-		/*	new float[GDALGetRasterYSize(elevationDataset)*GDALGetRasterXSize(elevationDataset)];
-		float * slope;
-		float dstNodataValue;
-
-		if (!getRasterData(elevationDataset, elevation, dstNodataValue))
-		{
-			return false;
-		}
-
-		if (inputSlopeDataset_.connected())
-		{
-			slope = new float[GDALGetRasterYSize(elevationDataset)*GDALGetRasterXSize(elevationDataset)];
-			if (!getRasterData(*dataSlopeDataset_, slope, dstNodataValue))
-			{
-				return false;
-			}
-		}
-
-		*/
+		
 		/*START - Get constants for energy conoid model (Imax, C, gp', \lambda)
 		From Esposti Ongaro et al. (2016) 'A fast, calibrated model for pyroclastic 
 			density current kinematics and hazard' JVGR 327, pp. 257-272
@@ -325,20 +264,6 @@ namespace RF
 		float * pixElev = getRasterData(elevationDataset, dstNodataValue, pixelX, pixelY,
 			1, 1);
 
-		/*if (!getRasterData(elevationDataset, pixElev, dstNodataValue, pixelX, pixelY,
-			1, 1))
-		{
-			return false;
-		}*/
-
-		/*GDALRasterIO(hBand, GF_Read,
-			pixelX, pixelY,
-			1, 1,
-			&pixElev,
-			1, 1,
-			GDT_Float32,
-			0, 0);
-		*/
 		std::cout << QString("Elevation at initiation point is %1 metres.").arg(*pixElev) + "\n";
 
 		for (int i = 0; i < GDALGetRasterXSize(elevationDataset)*GDALGetRasterYSize(elevationDataset); ++i)
@@ -371,7 +296,7 @@ namespace RF
 			dyPressure[i] = (std::max((float) 0.0, energyConoid[i]) * 2 * gravity) * 0.5 * ((*dataConcentration_* *dataParticleDensity_) +
 				((1 - *dataConcentration_) * *dataAtmosphereDensity_));
 		}
-
+		
 		outputRaster = GDALCreate(GDALGetDatasetDriver(elevationDataset),
 			outputRasterName.toLocal8Bit().constData(),
 			GDALGetRasterXSize(elevationDataset),

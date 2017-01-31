@@ -39,6 +39,8 @@
 
 #include "gdal.h"
 #include "gdal_priv.h"
+#include "ogr_spatialref.h"
+
 
 #include "Workspace/DataExecution/DataObjects/typeddatafactory.h"
 
