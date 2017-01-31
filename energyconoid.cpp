@@ -25,6 +25,7 @@ as endorsement.
 
 #include "volcanoplugin.h"
 #include "energyconoid.h"
+#include "volcanoutils.h"
 
 
 namespace RF
@@ -42,6 +43,7 @@ namespace RF
 
 		// Data objects
 		CSIRO::DataExecution::TypedObject< GDALDatasetH >  dataElevationDataset_;
+		CSIRO::DataExecution::TypedObject< GDALDatasetH >  dataSlopeDataset_;
 		CSIRO::DataExecution::TypedObject< double >        dataSettlingVelocity_;
 		CSIRO::DataExecution::TypedObject< double >        dataFroude_;
 		CSIRO::DataExecution::TypedObject< double >        dataConcentration_;
@@ -55,12 +57,14 @@ namespace RF
 		CSIRO::DataExecution::TypedObject< QString >       dataOutputRasterName_;
 		CSIRO::DataExecution::TypedObject< GDALDatasetH >  dataOutputRaster_;
 		CSIRO::DataExecution::TypedObject< GDALDatasetH >  dataEnergyConoid_;
+		CSIRO::DataExecution::TypedObject< GDALDatasetH >  dataDyPressure_;
 		CSIRO::DataExecution::TypedObject< int >           dataRasterBand_;
 		CSIRO::DataExecution::TypedObject< double >		   dataReducedGravity_;
 		CSIRO::DataExecution::TypedObject< double >		   dataImax_;
 
 		// Inputs and outputs
 		CSIRO::DataExecution::InputScalar inputElevationDataset_;
+		CSIRO::DataExecution::InputScalar inputSlopeDataset_;
 		CSIRO::DataExecution::InputScalar inputSettlingVelocity_;
 		CSIRO::DataExecution::InputScalar inputFroude_;
 		CSIRO::DataExecution::InputScalar inputConcentration_;
@@ -74,6 +78,7 @@ namespace RF
 		CSIRO::DataExecution::InputScalar inputOutputRasterName_;
 		CSIRO::DataExecution::Output      outputOutputRaster_;
 		CSIRO::DataExecution::Output	  outputEnergyConoid_;
+		CSIRO::DataExecution::Output	  outputDyPressure_;
 		CSIRO::DataExecution::InputScalar inputRasterBand_;
 		CSIRO::DataExecution::Output	  outputReducedGravity_;
 		CSIRO::DataExecution::Output	  outputImax_;
@@ -91,6 +96,7 @@ namespace RF
     EnergyConoidImpl::EnergyConoidImpl(EnergyConoid& op) :
 		op_(op),
 		dataElevationDataset_(),
+		dataSlopeDataset_(),
 		dataSettlingVelocity_(0.25),
 		dataFroude_(1.18),
 		dataConcentration_(0.015),
@@ -104,10 +110,12 @@ namespace RF
 		dataOutputRasterName_(),
 		dataOutputRaster_(),
 		dataEnergyConoid_(),
+		dataDyPressure_(),
 		dataRasterBand_(1),
 		dataReducedGravity_(),
 		dataImax_(),
 		inputElevationDataset_("Elevation Dataset", dataElevationDataset_, op_),
+		inputSlopeDataset_("(Optional) Slope dataset", dataSlopeDataset_, op_),
 		inputSettlingVelocity_("Settling velocity", dataSettlingVelocity_, op_),
 		inputFroude_("Froude number", dataFroude_, op_),
 		inputConcentration_("Particle concentration", dataConcentration_, op_),
@@ -121,6 +129,7 @@ namespace RF
 		inputOutputRasterName_("Output Raster name", dataOutputRasterName_, op_),
 		outputOutputRaster_("Output Raster", dataOutputRaster_, op_),
 		outputEnergyConoid_("Energy conoid", dataEnergyConoid_, op_),
+		outputDyPressure_("Dynamic pressure", dataDyPressure_, op_),
 		outputReducedGravity_("Reduced gravity", dataReducedGravity_, op_),
 		outputImax_("Maximum runout", dataImax_, op_),
 		inputRasterBand_("Raster Band", dataRasterBand_, op_)
@@ -132,6 +141,7 @@ namespace RF
 		inputVolume_.setDescription(tr("Total volume of released material"));
 		inputRotation_.setDescription(tr("Numer of collapse sectors radially, volume per \
 					sector will be calculated as Vol/(2pi/N), where N is the number of sectors"));
+		inputSlopeDataset_.setDescription(tr("Slope angle dataset for energy conoid on a slope"));
         // Recommend setting a description of the operation and each input / output here:
         // op_.setDescription(tr("My operation does this, that and this other thing."));
         // input1_.input_.setDescription(tr("Used for such and such."));
@@ -184,21 +194,17 @@ namespace RF
 
 		GDALAllRegister();
 
-		GDALRasterBandH hBand;
+		/*
 
 		if (rasterBand > GDALGetRasterCount(elevationDataset))
 		{
 			std::cout << QString("ERROR: Not enough raster bands, number of bands is %1, band selected is %2").arg(GDALGetRasterCount(elevationDataset)).arg(rasterBand) + "\n";
 		}
 
+
+
+		GDALRasterBandH hBand, sBand;
 		hBand = GDALGetRasterBand(elevationDataset, rasterBand);
-
-		int srcNodata;
-		float dstNodataValue;
-
-		dstNodataValue = (float)GDALGetRasterNoDataValue(hBand, &srcNodata);
-		std::cout << QString("Input nodata value for energy cone is %1").arg(dstNodataValue) + "\n";
-
 		float * elevation;
 		elevation = new float[GDALGetRasterBandXSize(hBand)*GDALGetRasterBandYSize(hBand)];
 
@@ -210,8 +216,55 @@ namespace RF
 			GDT_Float32,
 			0, 0);
 
-		/*
-		START - Get constants for energy conoid model (Imax, C, gp', \lambda)
+		float dstNodataValue;
+
+		dstNodataValue = (float)GDALGetRasterNoDataValue(hBand, NULL);
+		std::cout << QString("Input nodata value for energy cone is %1").arg(dstNodataValue) + "\n";
+
+
+		float * slope;
+		if (inputSlopeDataset_.connected())
+		{
+			sBand = GDALGetRasterBand(*dataSlopeDataset_, rasterBand);
+			slope = new float[GDALGetRasterBandXSize(sBand)*GDALGetRasterBandYSize(sBand)];
+			GDALRasterIO(sBand, GF_Read,
+				0, 0,
+				GDALGetRasterBandXSize(sBand), GDALGetRasterBandYSize(sBand),
+				slope,
+				GDALGetRasterBandXSize(sBand), GDALGetRasterBandYSize(sBand),
+				GDT_Float32,
+				0, 0);
+		}
+		*/
+
+		float dstNodataValue;
+		float * elevation = getRasterData(elevationDataset, dstNodataValue);
+
+		float * slope;
+		if (inputSlopeDataset_.connected())
+		{
+			slope = getRasterData(*dataSlopeDataset_, dstNodataValue);
+		}
+		/*	new float[GDALGetRasterYSize(elevationDataset)*GDALGetRasterXSize(elevationDataset)];
+		float * slope;
+		float dstNodataValue;
+
+		if (!getRasterData(elevationDataset, elevation, dstNodataValue))
+		{
+			return false;
+		}
+
+		if (inputSlopeDataset_.connected())
+		{
+			slope = new float[GDALGetRasterYSize(elevationDataset)*GDALGetRasterXSize(elevationDataset)];
+			if (!getRasterData(*dataSlopeDataset_, slope, dstNodataValue))
+			{
+				return false;
+			}
+		}
+
+		*/
+		/*START - Get constants for energy conoid model (Imax, C, gp', \lambda)
 		From Esposti Ongaro et al. (2016) 'A fast, calibrated model for pyroclastic 
 			density current kinematics and hazard' JVGR 327, pp. 257-272
 
@@ -250,9 +303,11 @@ namespace RF
 		Loop through cells in the raster, calculating hmax (eq. 12 in Esposito Ongaro)
 		*/
 		float * energyConoid;
-		energyConoid = new float[GDALGetRasterBandXSize(hBand)*GDALGetRasterBandYSize(hBand)];
+		energyConoid = new float[GDALGetRasterXSize(elevationDataset)*GDALGetRasterYSize(elevationDataset)];
 		float * elevDiff;
-		elevDiff = new float[GDALGetRasterBandXSize(hBand)*GDALGetRasterBandYSize(hBand)];
+		elevDiff = new float[GDALGetRasterXSize(elevationDataset)*GDALGetRasterYSize(elevationDataset)];
+		float * dyPressure;
+		dyPressure = new float[GDALGetRasterXSize(elevationDataset)*GDALGetRasterYSize(elevationDataset)];
 
 		//Get geotransform to convert from cellspace (P,L) to geographical space
 		//Xp = padfTransform[0] + P*padfTransform[1] + L*padfTransform[2]; 
@@ -266,32 +321,55 @@ namespace RF
 		GDALInvGeoTransform(transform, invTransform);
 		int pixelX = (int)floor(invTransform[0] + invTransform[1] * *dataXLocation_ + invTransform[2] * *dataYLocation_);
 		int pixelY = (int)floor(invTransform[3] + invTransform[4] * *dataXLocation_ + invTransform[5] * *dataYLocation_);
-		float pixElev;
+		
+		float * pixElev = getRasterData(elevationDataset, dstNodataValue, pixelX, pixelY,
+			1, 1);
 
-		GDALRasterIO(hBand, GF_Read,
+		/*if (!getRasterData(elevationDataset, pixElev, dstNodataValue, pixelX, pixelY,
+			1, 1))
+		{
+			return false;
+		}*/
+
+		/*GDALRasterIO(hBand, GF_Read,
 			pixelX, pixelY,
 			1, 1,
 			&pixElev,
 			1, 1,
 			GDT_Float32,
 			0, 0);
+		*/
+		std::cout << QString("Elevation at initiation point is %1 metres.").arg(*pixElev) + "\n";
 
-		std::cout << QString("Elevation at initiation point is %1 metres.").arg(pixElev) + "\n";
-
-		for (int i = 0; i < GDALGetRasterBandXSize(hBand)*GDALGetRasterBandYSize(hBand); ++i)
+		for (int i = 0; i < GDALGetRasterXSize(elevationDataset)*GDALGetRasterYSize(elevationDataset); ++i)
 		{
-			int L = floorf(i / GDALGetRasterBandXSize(hBand));
-			int P = i - (L*GDALGetRasterBandXSize(hBand));
+			int L = floorf(i / GDALGetRasterXSize(elevationDataset));
+			int P = i - (L*GDALGetRasterXSize(elevationDataset));
 
 			double xl = transform[0] + P*transform[1] + L*transform[2];
 			double yl = transform[3] + P*transform[4] + L*transform[5];
 
 			//Distance (x/lmax)
 			double dist = ecludianDistance2D(*dataXLocation_, *dataYLocation_, xl, yl) / lmax;
-		
-			energyConoid[i] = h_max_cyl(gravity, C, lmax, dist);
-			elevDiff[i] = (float) std::max(0.0, (double) energyConoid[i] - elevation[i]);
+			
+			if (inputSlopeDataset_.connected())
+			{
+				gp = ((*dataParticleDensity_ - *dataAtmosphereDensity_) / *dataAtmosphereDensity_)*(gravity*cos(slope[i]*DEG2RAD));
+				C = pow(*dataSettlingVelocity_, 1.0 / 3.0)*pow(*dataFroude_, 2.0 / 3.0)*pow(*dataConcentration_, 1.0 / 3.0)*pow(gp, 1.0 / 3.0);
 
+				//Calculate lmax
+				lmax = l_max(*dataConcentration_, *dataFroude_, A, *dataSettlingVelocity_, gp, *dataAxisymmetric_);
+
+				energyConoid[i] = h_max_cyl(gravity*cos(slope[i]*DEG2RAD), C, lmax, dist);
+			}
+			else {
+				energyConoid[i] = h_max_cyl(gravity, C, lmax, dist);
+			}
+			elevDiff[i] = std::max((float) 0.0, energyConoid[i] + *pixElev - elevation[i]);
+			//Dynamic Pressure (Eq. 10 Esposti Ongaro)
+			//((*dataConcentration_* *dataParticleDensity_)+((1-*dataConcentration_) * *dataAtmosphereDensity_))*gravity*std::max((float) 0.0, energyConoid[i]);
+			dyPressure[i] = (std::max((float) 0.0, energyConoid[i]) * 2 * gravity) * 0.5 * ((*dataConcentration_* *dataParticleDensity_) +
+				((1 - *dataConcentration_) * *dataAtmosphereDensity_));
 		}
 
 		outputRaster = GDALCreate(GDALGetDatasetDriver(elevationDataset),
@@ -311,12 +389,24 @@ namespace RF
 			GDT_Float32,
 			NULL);
 
+		GDALDatasetH& dynamicPressureRaster = *dataDyPressure_;
+
+		dynamicPressureRaster = GDALCreate(GDALGetDatasetDriver(elevationDataset),
+			"dynamic_pressure",
+			GDALGetRasterXSize(elevationDataset),
+			GDALGetRasterYSize(elevationDataset),
+			1,
+			GDT_Float32,
+			NULL);
 
 		GDALRasterBandH destBand = GDALGetRasterBand(outputRaster, 1);
 		GDALSetGeoTransform(outputRaster, transform);
 
 		GDALRasterBandH conoidDestBand = GDALGetRasterBand(conoidRaster, 1);
 		GDALSetGeoTransform(conoidRaster, transform);
+
+		GDALRasterBandH dyPressureBand = GDALGetRasterBand(dynamicPressureRaster, 1);
+		GDALSetGeoTransform(dynamicPressureRaster, transform);
 
 		if (GDALSetProjection(outputRaster, GDALGetProjectionRef(elevationDataset)) != CE_None)
 		{
@@ -348,22 +438,47 @@ namespace RF
 			}
 		}
 
+		if (GDALSetProjection(dynamicPressureRaster, GDALGetProjectionRef(elevationDataset)) != CE_None)
+		{
+			std::cout << QString("WARNING: Output projection cannot be set, setting to WGS84") + "\n";
+			OGRSpatialReferenceH hSRS;
+			hSRS = OSRNewSpatialReference(NULL);
+			OSRSetWellKnownGeogCS(hSRS, "WGS84");
+			char *gsR = NULL;
+			OSRExportToWkt(hSRS, &gsR);
+			if (GDALSetProjection(dynamicPressureRaster, gsR) != CE_None)
+			{
+				std::cout << QString("ERROR: Could not set projection to WGS84") + "\n";
+				return false;
+			}
+		}
+
+
 		GDALSetRasterNoDataValue(destBand, dstNodataValue);
 		GDALSetRasterNoDataValue(conoidDestBand, dstNodataValue);
+		GDALSetRasterNoDataValue(dyPressureBand, dstNodataValue);
 
 		GDALRasterIO(destBand, GF_Write,
 			0, 0,
-			GDALGetRasterBandXSize(hBand), GDALGetRasterBandYSize(hBand),
+			GDALGetRasterXSize(elevationDataset), GDALGetRasterYSize(elevationDataset),
 			elevDiff,
-			GDALGetRasterBandXSize(hBand), GDALGetRasterBandYSize(hBand),
+			GDALGetRasterXSize(elevationDataset), GDALGetRasterYSize(elevationDataset), 
 			GDT_Float32,
 			0, 0);
 
 		GDALRasterIO(conoidDestBand, GF_Write,
 			0, 0,
-			GDALGetRasterBandXSize(hBand), GDALGetRasterBandYSize(hBand),
+			GDALGetRasterXSize(elevationDataset), GDALGetRasterYSize(elevationDataset), 
 			energyConoid,
-			GDALGetRasterBandXSize(hBand), GDALGetRasterBandYSize(hBand),
+			GDALGetRasterXSize(elevationDataset), GDALGetRasterYSize(elevationDataset), 
+			GDT_Float32,
+			0, 0);
+
+		GDALRasterIO(dyPressureBand, GF_Write,
+			0, 0,
+			GDALGetRasterXSize(elevationDataset), GDALGetRasterYSize(elevationDataset),
+			dyPressure,
+			GDALGetRasterXSize(elevationDataset), GDALGetRasterYSize(elevationDataset),
 			GDT_Float32,
 			0, 0);
  

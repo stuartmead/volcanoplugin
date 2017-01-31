@@ -55,6 +55,55 @@
 #define ROOT_2 sqrtf(2)
 #endif
 
+float * getRasterData(GDALDatasetH raster, float dstNodataValue,
+	int xOffset, int yOffset, int xLength, int yLength, double scaleFactor, int bandNo)
+{
+	if (bandNo > GDALGetRasterCount(raster))
+	{
+		std::cout << QString("ERROR: Not enough raster bands, number of bands is %1, band selected is %2").arg(GDALGetRasterCount(raster)).arg(bandNo) + "\n";
+	}
+
+	double sizes[2];
+	if (xLength <= 0)
+	{
+		sizes[0] = GDALGetRasterXSize(raster) - xOffset;
+	}
+	else
+	{
+		sizes[0] = xLength;
+	}
+
+	if (yLength <= 0)
+	{
+		sizes[1] = GDALGetRasterYSize(raster) - yOffset;
+	}
+	else
+	{
+		sizes[1] = yLength;
+	}
+
+	GDALRasterBandH band = GDALGetRasterBand(raster, bandNo);
+	
+	dstNodataValue = GDALGetRasterNoDataValue(band, NULL);
+
+	float * data = new float[GDALGetRasterYSize(raster)*GDALGetRasterXSize(raster)];
+
+	if (GDALRasterIO(band, GF_Read,
+		xOffset, yOffset, //X,Y offset in cells
+		sizes[0], sizes[1], //X,Y length in cells
+		data, //data
+		floor(sizes[0] / scaleFactor), floor(sizes[1] / scaleFactor), //Number of cells in new dataset
+		GDT_Float32, //Type
+		0, 0) != CE_None)
+	{
+		std::cout << QString("Error: There was an issue reading the raster band") + "\n";
+    }
+	else
+	{
+		return data;
+	}
+}
+
 /*
 ComputeVal: Computes the value using a processing algorithim defined here - checking for nodata
 */
