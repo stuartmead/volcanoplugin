@@ -306,6 +306,7 @@ namespace RF
 			double lambda_c = *dataSettlingVelocity_ / (*dataFroude_*sqrt(pow(2 * A, 3.0)*gp));
 			depositMass[i] = pow(sqrt(*dataConcentration_) - (0.125*lambda_c*pow(std::min(dist, 1.0)*lmax, 4.0))
 				, 2.0);
+
 		}
 		
 		outputRaster = GDALCreate(GDALGetDatasetDriver(elevationDataset),
