@@ -37,8 +37,13 @@ set(GDAL_DIR "" CACHE PATH "GDAL library directory")
 set(GDAL_INCLUDE_DIR "" CACHE PATH "GDAL include directory")
 include_directories(${GDAL_INCLUDE_DIR})
 
-set(OpenCV_DIR "" CACHE PATH "THe location of the build directory in your OpenCV directory")
+set(OpenCV_DIR "" CACHE PATH "The location of the build directory in your OpenCV directory")
 find_package(OpenCV REQUIRED)
+
+set(HDF5_DIR "" CACHE PATH "The location of hdf5 cmake files")
+include_directories(${HDF5_DIR}/include)
+link_directories(${HDF5_DIR}/lib)
+link_directories(${HDF5_DIR}/bin)
 
 if (USE_QT5)
     find_package(Qt5Core)
