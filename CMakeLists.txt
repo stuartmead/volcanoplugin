@@ -54,6 +54,7 @@ endif()
 link_directories(${GDAL_DIR})
 
 set(HEADERS
+    ${VOLCANO_SOURCE_DIR}/titanh5reader.h
     ${VOLCANO_SOURCE_DIR}/energyconoid.h
     ${VOLCANO_SOURCE_DIR}/ellipticalpile.h
     ${VOLCANO_SOURCE_DIR}/totalupstreamproperty.h
@@ -88,11 +89,13 @@ set(HEADERS
     ${VOLCANO_SOURCE_DIR}/volcanoplugin_api.h
     ${VOLCANO_SOURCE_DIR}/volcanoplugin.h
     ${VOLCANO_SOURCE_DIR}/volcanoutils.h
+	${VOLCANO_SOURCE_DIR}/h5utils.h
     ${VOLCANO_SOURCE_DIR}/erosionutils.h
     ${VOLCANO_SOURCE_DIR}/boundsofraster.h
 )
 
 set(INSTALL_HEADERS
+    ${VOLCANO_SOURCE_DIR}/titanh5reader.h
     ${VOLCANO_SOURCE_DIR}/energyconoid.h
     ${VOLCANO_SOURCE_DIR}/ellipticalpile.h
     ${VOLCANO_SOURCE_DIR}/totalupstreamproperty.h
@@ -135,6 +138,7 @@ set(MOC_HEADERS
 )
 
 set(SOURCES
+    ${VOLCANO_SOURCE_DIR}/titanh5reader.cpp
     ${VOLCANO_SOURCE_DIR}/energyconoid.cpp
     ${VOLCANO_SOURCE_DIR}/ellipticalpile.cpp
     ${VOLCANO_SOURCE_DIR}/totalupstreamproperty.cpp
