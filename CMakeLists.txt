@@ -9,8 +9,9 @@
 #
 #*/
 
-cmake_minimum_required(VERSION 2.6)
+
 project(VOLCANO)
+
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     find_path(WORKSPACE_CMAKE_ROOT Workspace_CMake_Root.txt
               HINTS ${CMAKE_SOURCE_DIR} ENV WORKSPACE_CMAKE_ROOT
@@ -21,6 +22,9 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     include( ${WORKSPACE_CMAKE_ROOT}/CMakeLists.txt NO_POLICY_SCOPE )
 endif()
 
+cmake_minimum_required(VERSION 3.0)
+
+
 include_directories(${VOLCANO_SOURCE_DIR})
 if (NOT ${VOLCANO_SOURCE_DIR} STREQUAL ${VOLCANO_BINARY_DIR})
     include_directories(${VOLCANO_BINARY_DIR})
@@ -30,30 +34,31 @@ endif()
 set(VOLCANO_PLUGIN_VERSION 0.1.0)
 string(REGEX MATCH "^[0-9]+" VOLCANO_PLUGIN_SOVERSION ${VOLCANO_PLUGIN_VERSION})
 
+# Add other Qt modules as required by your plugin - eg. QtNetwork, QtOpenGL, QtSql
+find_package(Qt5Gui)
+find_package(Qt5Core)
+find_package(Qt5Widgets)
+set(QT_LIBRARIES Qt5::Core;Qt5::Widgets)
+
 
 #set(GEOSPATIAL_PLUGIN_DIR "" CACHE PATH "Geospatial plugin directory")
-set(GDAL_DIR "" CACHE PATH "GDAL library directory")
+find_package(GDAL)
 
-set(GDAL_INCLUDE_DIR "" CACHE PATH "GDAL include directory")
+#set(GDAL_DIR "" CACHE PATH "GDAL library directory")
+
+#set(GDAL_INCLUDE_DIR "" CACHE PATH "GDAL include directory")
 include_directories(${GDAL_INCLUDE_DIR})
 
 set(OpenCV_DIR "" CACHE PATH "The location of the build directory in your OpenCV directory")
 find_package(OpenCV REQUIRED)
 
-set(HDF5_DIR "" CACHE PATH "The location of hdf5 cmake files")
-include_directories(${HDF5_DIR}/include)
-link_directories(${HDF5_DIR}/lib)
-link_directories(${HDF5_DIR}/bin)
+find_package(HDF5 REQUIRED)
+include_directories(${HDF5_INCLUDE_DIRS})
 
-if (USE_QT5)
-    find_package(Qt5Core)
-    find_package(Qt5Widgets)
-    find_package(Qt5Gui)
-    set(QT_LIBRARIES Qt5::Core;Qt5::Widgets;Qt5::Gui)
-else()
-    find_package(Qt4 COMPONENTS QtCore QtGui)
-    include(${QT_USE_FILE})
-endif()
+#set(HDF5_DIR "" CACHE PATH "The location of hdf5 cmake files")
+#include_directories(${HDF5_DIR}/include)
+##link_directories(${HDF5_DIR}/lib)
+#link_directories(${HDF5_DIR}/bin)
 
 #link_directories(${GEOSPATIAL_PLUGIN_DIR})
 link_directories(${GDAL_DIR})
@@ -197,7 +202,7 @@ add_definitions(-DVOLCANO_PLUGIN_VERSION=${VOLCANO_PLUGIN_VERSION})
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 add_library(volcanoplugin ${SOURCES} ${HEADERS} ${MOC_SOURCES} ${UIC_SOURCES})
-target_link_libraries(volcanoplugin dataanalysisplugin meshplugin gdal_i workspace ${OpenCV_LIBS} ${QT_LIBRARIES})
+target_link_libraries(volcanoplugin dataanalysisplugin meshplugin workspace ${HDF5_LIBRARIES} ${GDAL_LIBRARIES} ${OpenCV_LIBS} ${QT_LIBRARIES})
 
 set_target_properties(volcanoplugin PROPERTIES
     DEFINE_SYMBOL RF_EXPORT

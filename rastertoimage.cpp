@@ -12,7 +12,7 @@
 #include <cassert>
 #include <iostream>
 
-#include < Qimage >
+#include <QImage>
 
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"

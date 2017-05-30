@@ -11,7 +11,7 @@
 #include <cassert>
 #include <iostream>
 
-#include < Qimage >
+#include <QImage>
 
 #include "Workspace/Application/LanguageUtils/streamqstring.h"
 #include "Workspace/DataExecution/DataObjects/typedobject.h"

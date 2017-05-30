@@ -12,7 +12,7 @@
 #include <cassert>
 #include <iostream>
 
-#include <Qvector>
+#include <QVector>
 
 #include "Workspace/Application/LanguageUtils/streamqstring.h"
 #include "Workspace/DataExecution/DataObjects/typedobject.h"

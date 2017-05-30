@@ -16,6 +16,7 @@
 #include <algorithm>
 
 #include <qstring.h>
+#include<QMap>
 
 #include "Workspace/Application/LanguageUtils/streamqstring.h"
 #include "Workspace/DataExecution/DataObjects/typedobject.h"
@@ -92,49 +93,110 @@ namespace RF
 		mesh.clear();
 
 		CSIRO::Mesh::MeshNodesInterface&    nodes = mesh.getNodes();
-		CSIRO::Mesh::MeshElementsInterface& elems = mesh.getElements(CSIRO::Mesh::ElementType::Tri::getInstance());
+		CSIRO::Mesh::MeshElementsInterface& elems = mesh.getElements(CSIRO::Mesh::ElementType::Quad::getInstance());
 
-		HdfFile hdfFile = HdfFile(fileName);
-		HdfGroup geom = hdfFile.group("Mesh");
-		HdfGroup props = hdfFile.group("Properties");
+		HdfFile hdata = HdfFile(fileName);
+        if(!hdata.isValid())
+        {
+            std::cout << QString("ERROR: HDF file is invalid!\n");
+            return false;
+        }
 
+		HdfGroup geom = hdata.group("Mesh");
+        if(!geom.isValid())
+        {
+            std::cout << QString("ERROR: Geometry mesh group is invalid!\n");
+            return false;
+        }
+		HdfGroup props = hdata.group("Properties");
+        if(!hdata.isValid())
+        {
+            std::cout << QString("ERROR: Property group is invalid!\n");
+            return false;
+        }
+        
 		//Parse mesh
 		HdfDataset point = geom.dataset("Points");
+        if(!point.isValid())
+        {
+            std::cout << QString("ERROR: Point dataset is invalid!\n");
+            return false;
+        }
 		
 		QVector<hsize_t> nNds = point.dims();
+        std::cout << QString("Point dimensions are %1, %2").arg(nNds.at(0)).arg(nNds.at(1)) + "\n";
 		QVector<float> points = point.readArray();
 
-		std::vector<CSIRO::Mesh::NodeHandle> nodeLookup;
-		int it = 0;
-		for (int i = 0; i < nNds.at(0); ++i)
+        QMap<int, CSIRO::Mesh::NodeHandle> nodeMap;
+		CSIRO::Mesh::Vector3D vec;
+        int it = 0;
+        for (int i = 0; i < nNds.at(0); ++i)
 		{
-			CSIRO::Mesh::NodeHandle nh = nodes.add(CSIRO::Mesh::Vector3D(points[nNds[1] * i],
-				points[nNds[1] * i + 1],
-				points[nNds[1] * i + 1]));
-				nodeLookup.push_back(nh);
+            vec.x = points[nNds[1]*i];
+            vec.y = points[nNds[1]*i+1];
+            vec.z = points[nNds[1]*i+2];//0.0;     
+			CSIRO::Mesh::NodeHandle nh = nodes.add(vec);
+            nodeMap[i] = nh;
 		}
 		
-		HdfDataset conns = geom.dataset("Connections");
-		
-		QVector<hsize_t> nElm = conns.dims();
-		QVector<int> elem_conn = conns.readArrayInt();
-		
-		//States for elements
+		HdfDataset conns =  geom.dataset("Connections");
+        if (!conns.isValid())
+        {
+            std::cout << QString("ERROR: cannot load connections dataset \n");
+            return false;
+        }
+        HdfDataset pHeight = props.dataset("PILE_HEIGHT");
+        if (!pHeight.isValid())
+        {
+            std::cout << QString("ERROR: cannot load pile height dataset\n");
+            return false;
+        }
+		HdfDataset momX = props.dataset("XMOMENTUM");
+		if (!momX.isValid())
+        {
+            std::cout << QString("ERROR: cannot load pile height dataset\n");
+            return false;
+        }
+        HdfDataset momY = props.dataset("YMOMENTUM");
+		if (!momY.isValid())
+        {
+            std::cout << QString("ERROR: cannot load pile height dataset\n");
+            return false;
+        }
 
-		float htRef = 0.0;
+		QVector<hsize_t> nElm = conns.dims();
+        std::cout << QString("Element dimensions are %1, %2").arg(nElm.at(0)).arg(nElm.at(1)) + "\n";
+		QVector<int> elem_conn = conns.readArrayInt();
+
+		//States for elements
+		double htRef = 0.0;
 		CSIRO::Mesh::ElementStateHandle pH = elems.addState("Pile height", htRef);
+        if(!pH.isValid())
+        {
+            std::cout << QString("ERROR: Pile height state not added.\n");
+            return false;
+        }
 		CSIRO::Mesh::ElementStateHandle xM = elems.addState("X momentum", htRef);
 		CSIRO::Mesh::ElementStateHandle yM = elems.addState("Y momentum", htRef);
-		CSIRO::Mesh::ElementStateHandle mM = elems.addState("Momentum mag", htRef);
-
-		HdfDataset pHeight = props.dataset("PILE_HEIGHT");
-		HdfDataset momX = props.dataset("XMOMENTUM");
-		HdfDataset momY = props.dataset("YMOMENTUM");
+		CSIRO::Mesh::ElementStateHandle mMag = elems.addState("Momentum mag", htRef);
 
 		QVector<float> pileVals = pHeight.readArray();
 		QVector<float> xVals = momX.readArray();
 		QVector<float> yVals = momY.readArray();
+/*
+       for (int e = 0; e < nElm.at(0); ++e)
+       {
+           elements[e].setId(e);
+           elements[e].setEType(Element::E4Q);
+           QVector<uint> idx(nElm.at(1));
+               for (int fi=0; fi < nElm.at(1); ++fi)
+               {
+                   idx[fi] = elem_conn[nElm[1]*e + fi];
+               }
+        elements[e].setP(idx.data());
+    }
 
+*/
 		for (int e = 0; e < nElm.at(0); ++e)
 		{
 			QVector<uint> Nid(nElm.at(1));
@@ -142,14 +204,12 @@ namespace RF
 			{
 				Nid[ni] = elem_conn[nElm[1] * e + ni];
 			}
-			CSIRO::Mesh::ElementHandle eh = elems.add(nodeLookup[Nid[1]], nodeLookup[Nid[2]], nodeLookup[Nid[3]], nodeLookup[Nid[4]]);
-			elems.setState(eh, pH, pileVals[e]);
-			elems.setState(eh, xM, xVals[e]);
-			elems.setState(eh, yM, yVals[e]);
-			elems.setState(eh, mM, sqrt(xVals[e] * xVals[e] + yVals[e] * yVals[e]));
+			CSIRO::Mesh::ElementHandle eh = elems.add(nodeMap[Nid[0]], nodeMap[Nid[1]], nodeMap[Nid[2]], nodeMap[Nid[3]]);
+			elems.setState(eh, pH, (double)pileVals[e]);
+			elems.setState(eh, xM, (double)xVals[e]);
+			elems.setState(eh, yM, (double)yVals[e]);
+			elems.setState(eh, mMag, (double)sqrt(xVals[e] * xVals[e] + yVals[e] * yVals[e]));
 		}
-
-
 
         return true;
     }
