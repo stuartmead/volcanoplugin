@@ -196,11 +196,13 @@ namespace RF
         double yposn = transform[3];
         std::vector<CSIRO::Mesh::NodeHandle> nodeLookup;
         int it = 0;
-        for (int i = 0; i < scaleYsize; ++i)
+        for (int i = 0; i < scaleYsize; ++i)//Line
         {
-            for (int j = 0; j < scaleXsize; ++j)
+            for (int j = 0; j < scaleXsize; ++j)//Pixel
             {
-                CSIRO::Mesh::NodeHandle nh = nodes.add(CSIRO::Mesh::Vector3D(xposn+(i*((sizes[0]/scaleXsize)*transform[1])),yposn+(j*((sizes[1]/scaleYsize)*-transform[5])),data[it]));
+                CSIRO::Mesh::NodeHandle nh = nodes.add(CSIRO::Mesh::Vector3D(transform[0] + j*transform[1] + i*transform[2],//xposn+(i*((sizes[0]/scaleXsize)*transform[1]))
+                transform[3] + j*transform[4] + i*transform[5],//yposn+(j*((sizes[1]/scaleYsize)*-transform[5])),
+                data[it]));
                 nodeLookup.push_back(nh);
                 /*/Deal with states here
                 for (int k = 0; k < propertyHandles.size(); ++k)

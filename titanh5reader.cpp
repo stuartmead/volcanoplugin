@@ -134,7 +134,7 @@ namespace RF
 		{
             vec.x = points[nNds[1]*i];
             vec.y = points[nNds[1]*i+1];
-            vec.z = points[nNds[1]*i+2];//0.0;     
+            vec.z = points[nNds[1]*i+2];     
 			CSIRO::Mesh::NodeHandle nh = nodes.add(vec);
             nodeMap[i] = nh;
 		}
