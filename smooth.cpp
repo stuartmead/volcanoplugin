@@ -102,7 +102,7 @@ namespace RF
         double&       sigma                 = *dataSigma_;
         GDALDatasetH& outputDataset         = *dataOutputDataset_;
         
-         GDALRasterBandH hBand = GDALGetRasterBand(inputDataset, 1);
+        GDALRasterBandH hBand = GDALGetRasterBand(inputDataset, 1);
 
         float *data;
         data = new float[GDALGetRasterBandXSize(hBand)*GDALGetRasterBandYSize(hBand)];

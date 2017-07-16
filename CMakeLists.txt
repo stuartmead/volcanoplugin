@@ -64,6 +64,7 @@ include_directories(${HDF5_INCLUDE_DIRS})
 link_directories(${GDAL_DIR})
 
 set(HEADERS
+    ${VOLCANO_SOURCE_DIR}/mergerasters.h
     ${VOLCANO_SOURCE_DIR}/titanh5reader.h
     ${VOLCANO_SOURCE_DIR}/energyconoid.h
     ${VOLCANO_SOURCE_DIR}/ellipticalpile.h
@@ -105,6 +106,7 @@ set(HEADERS
 )
 
 set(INSTALL_HEADERS
+    ${VOLCANO_SOURCE_DIR}/mergerasters.h
     ${VOLCANO_SOURCE_DIR}/titanh5reader.h
     ${VOLCANO_SOURCE_DIR}/energyconoid.h
     ${VOLCANO_SOURCE_DIR}/ellipticalpile.h
@@ -148,6 +150,7 @@ set(MOC_HEADERS
 )
 
 set(SOURCES
+    ${VOLCANO_SOURCE_DIR}/mergerasters.cpp
     ${VOLCANO_SOURCE_DIR}/titanh5reader.cpp
     ${VOLCANO_SOURCE_DIR}/energyconoid.cpp
     ${VOLCANO_SOURCE_DIR}/ellipticalpile.cpp
