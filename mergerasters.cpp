@@ -110,15 +110,15 @@ namespace RF
 		GDALRasterIO(overlayBand, GF_Read,
 			0, 0,
 			GDALGetRasterBandXSize(overlayBand), GDALGetRasterBandYSize(overlayBand),
-			baseData,
+			overlayData,
 			GDALGetRasterBandXSize(overlayBand), GDALGetRasterBandYSize(overlayBand),
 			GDT_Float32,
 			0, 0);
 
 
 		double baseTransform[6], overlayTransform[6];
-		GDALGetGeoTransform(baseBand, baseTransform);
-		GDALGetGeoTransform(overlayBand, overlayTransform);
+		GDALGetGeoTransform(baseLayer, baseTransform);
+		GDALGetGeoTransform(overlayLayer, overlayTransform);
 		/******Geo Transform is
 		adfGeoTransform[0] /* top left x
 		adfGeoTransform[1] /* w-e pixel resolution
@@ -129,6 +129,7 @@ namespace RF
 		*/
 
 		//Check that overlay is same size or smaller
+		/*
 		if (baseTransform[0] < overlayTransform[0] || //X min smaller
 			baseTransform[0] + baseTransform[1] * GDALGetRasterBandXSize(baseBand) < overlayTransform[0] + overlayTransform[1] * GDALGetRasterBandXSize(overlayBand)) //X max
 		{
@@ -141,7 +142,7 @@ namespace RF
 			std::cout << QString("ERROR: Base raster is not bigger or equal to overlay raster in Y") + "\n";
 			return false;
 		}
-
+		*/
 		//Convert float array to an openCV mat (assuming rows = Y)
 		cv::Mat baseMat(GDALGetRasterBandYSize(baseBand), GDALGetRasterBandXSize(baseBand), CV_32F, baseData);
 		cv::Mat overlayMat(GDALGetRasterBandYSize(overlayBand), GDALGetRasterBandXSize(overlayBand), CV_32F, overlayData);
@@ -149,6 +150,7 @@ namespace RF
 		//Resize (most likely downsample) overlay to baseData size
 		int overlayResizeY = floor((overlayTransform[5] * GDALGetRasterBandYSize(overlayBand)) / baseTransform[5]);
 		int overlayResizeX = floor((overlayTransform[1] * GDALGetRasterBandXSize(overlayBand)) / baseTransform[1]);
+		std::cout << QString("Resizing to %1 x and %2 y").arg(overlayResizeX).arg(overlayResizeY) + "\n";
 		cv::Mat overlayMatSize(overlayResizeY, overlayResizeY, CV_32F);
 		cv::resize(overlayMat, overlayMatSize, overlayMatSize.size(), 0, 0, CV_INTER_LINEAR);
 
@@ -160,7 +162,7 @@ namespace RF
 		//Now do linear addition
 		cv::Mat outputMat = baseMat.clone();
 		cv::addWeighted(outputMat(roi), baseWeight, overlayMatSize, overlayWeighting, 0.0, outputMat(roi));
-
+		
 		mergedDataset = GDALCreate(GDALGetDatasetDriver(baseLayer),
 			filename.toLocal8Bit().constData(),
 			GDALGetRasterXSize(baseLayer), GDALGetRasterYSize(baseLayer),
