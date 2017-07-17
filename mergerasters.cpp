@@ -36,6 +36,7 @@ namespace RF
         CSIRO::DataExecution::SimpleInput< GDALDatasetH > overlayLayer_;
         CSIRO::DataExecution::SimpleInput< double > baseWeight_;
         CSIRO::DataExecution::SimpleInput< double > overlayWeighting_;
+		CSIRO::DataExecution::SimpleInput< double > gamma_;
 		CSIRO::DataExecution::SimpleInput< QString > mergedDatasetFilename_;
         CSIRO::DataExecution::SimpleOutput< GDALDatasetH > mergedDataset_;
 		
@@ -56,6 +57,7 @@ namespace RF
         overlayLayer_("Overlay layer",  op_),
         baseWeight_("Base weighting", 0.1,  op_),
 		overlayWeighting_("Overlay weighting", 0.9,  op_),
+		gamma_("Additional height", 0.0, op_),
 		mergedDatasetFilename_("Merged dataset filename", op_),
         mergedDataset_("Merged dataset",  op_)
     {
@@ -80,6 +82,7 @@ namespace RF
         const GDALDatasetH& overlayLayer     = *overlayLayer_;
         const double&       baseWeight       = *baseWeight_;
         const double&       overlayWeighting = *overlayWeighting_;
+		const double&		gamma = *gamma_;
         GDALDatasetH& mergedDataset    = *mergedDataset_;
 		QString& filename = *mergedDatasetFilename_;
         
@@ -150,18 +153,24 @@ namespace RF
 		//Resize (most likely downsample) overlay to baseData size
 		int overlayResizeY = floor((overlayTransform[5] * GDALGetRasterBandYSize(overlayBand)) / baseTransform[5]);
 		int overlayResizeX = floor((overlayTransform[1] * GDALGetRasterBandXSize(overlayBand)) / baseTransform[1]);
-		std::cout << QString("Resizing to %1 x and %2 y").arg(overlayResizeX).arg(overlayResizeY) + "\n";
-		cv::Mat overlayMatSize(overlayResizeY, overlayResizeY, CV_32F);
+		std::cout << QString("Resizing to %1 X and %2 Y").arg(overlayResizeX).arg(overlayResizeY) + "\n";
+		cv::Mat overlayMatSize(overlayResizeY, overlayResizeX, CV_32F);
 		cv::resize(overlayMat, overlayMatSize, overlayMatSize.size(), 0, 0, CV_INTER_LINEAR);
 
-		//Work out ROI (base/anchor location)
-		int x_off = floor((overlayTransform[0] - baseTransform[0]) / baseTransform[1]);
-		int y_off = floor((overlayTransform[3] - baseTransform[3]) / baseTransform[5]);
-		cv::Rect roi = cv::Rect(x_off, y_off, overlayMatSize.rows, overlayMatSize.cols);
+
+		//Get Transform and invert to get pixel/line
+		double invTransform[6];
+		GDALInvGeoTransform(baseTransform, invTransform);
+
+		//Work out the pixel centre, pixel size of data
+		int x_off = (int)floor(invTransform[0] + invTransform[1] * overlayTransform[0] + invTransform[2] * overlayTransform[3])+1;
+		int y_off = (int)floor(invTransform[3] + invTransform[4] * overlayTransform[0] + invTransform[5] * overlayTransform[3])+1;
+		std::cout << QString("Offset is %1 X and %2 Y").arg(x_off).arg(y_off) + "\n";
+		cv::Rect roi = cv::Rect(x_off, y_off, overlayMatSize.cols, overlayMatSize.rows);
 		
 		//Now do linear addition
 		cv::Mat outputMat = baseMat.clone();
-		cv::addWeighted(outputMat(roi), baseWeight, overlayMatSize, overlayWeighting, 0.0, outputMat(roi));
+		cv::addWeighted(outputMat(roi), baseWeight, overlayMatSize, overlayWeighting, gamma, outputMat(roi));
 		
 		mergedDataset = GDALCreate(GDALGetDatasetDriver(baseLayer),
 			filename.toLocal8Bit().constData(),
