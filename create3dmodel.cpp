@@ -213,33 +213,73 @@ namespace RF
             }
         }
 
+		
         for (unsigned rData = 0; rData < propertyRasters.size(); ++rData)
         {
-            float *scrData = new float [scaleXsize*scaleYsize];
-            std::cout << QString("Property raster %1, name %2").arg(rData).arg(*names[rData]) + "\n";
-            GDALRasterBandH pBand = GDALGetRasterBand(*propertyRasters[rData],1);
-            //Read
-            GDALRasterIO(pBand, GF_Read,
-            nXOff, nYOff, //X,Y offset in cells
-            sizes[0], sizes[1], //X,Y length in cells
-            scrData, //data
-            scaleXsize, scaleYsize, //Number of cells in new dataset
-            GDT_Float32, //Type
-            0, 0);//Scanline stuff (for interleaving)
+			int rasterCount = GDALGetRasterCount(*propertyRasters[rData]);
+			
+			if (rasterCount > 1) 
+			{
+				for (int sit = 1; sit <= rasterCount; sit++) {
 
-            CSIRO::Mesh::NodeStateHandle nsh = nodes.addState<double>(*names[rData], 0.0);
+					float *scrData = new float[scaleXsize*scaleYsize];
+					std::cout << QString("Property raster %1, name %2, band %3").arg(rData).arg(*names[rData]).arg(sit) + "\n";
+					GDALRasterBandH pBand = GDALGetRasterBand(*propertyRasters[rData], sit);
+					//Read
+					GDALRasterIO(pBand, GF_Read,
+						nXOff, nYOff, //X,Y offset in cells
+						sizes[0], sizes[1], //X,Y length in cells
+						scrData, //data
+						scaleXsize, scaleYsize, //Number of cells in new dataset
+						GDT_Float32, //Type
+						0, 0);//Scanline stuff (for interleaving)
 
-            if (nodes.hasState(*names[rData]))
-            {
-                            for (int nit = 0; nit < nodeLookup.size(); ++nit)
-                {
-                    nodes.setState(nodeLookup[nit], nsh, (double) scrData[nit]);
-                }
-            }
-            else
-            {
-                std::cout << QString("WARNING: Nodes do not have newly added state %1").arg(rData) + "\n";
-            }
+					QString name = *names[rData];
+					name.append(QString::number(sit));
+					CSIRO::Mesh::NodeStateHandle nsh = nodes.addState<int>(name, 0);
+
+					if (nodes.hasState(name))
+					{
+						for (int nit = 0; nit < nodeLookup.size(); ++nit)
+						{
+							nodes.setState(nodeLookup[nit], nsh, (int)scrData[nit]);
+						}
+					}
+					else
+					{
+						std::cout << QString("WARNING: Nodes do not have newly added state %1").arg(rData) + "\n";
+					}
+				}
+			}
+			else {
+				
+				float *scrData = new float[scaleXsize*scaleYsize];
+				std::cout << QString("Property raster %1, name %2").arg(rData).arg(*names[rData]) + "\n";
+				GDALRasterBandH pBand = GDALGetRasterBand(*propertyRasters[rData], 1);
+				//Read
+				GDALRasterIO(pBand, GF_Read,
+					nXOff, nYOff, //X,Y offset in cells
+					sizes[0], sizes[1], //X,Y length in cells
+					scrData, //data
+					scaleXsize, scaleYsize, //Number of cells in new dataset
+					GDT_Float32, //Type
+					0, 0);//Scanline stuff (for interleaving)
+
+				CSIRO::Mesh::NodeStateHandle nsh = nodes.addState<double>(*names[rData], 0.0);
+
+				if (nodes.hasState(*names[rData]))
+				{
+					for (int nit = 0; nit < nodeLookup.size(); ++nit)
+					{
+						nodes.setState(nodeLookup[nit], nsh, (double)scrData[nit]);
+					}
+				}
+				else
+				{
+					std::cout << QString("WARNING: Nodes do not have newly added state %1").arg(rData) + "\n";
+				}
+			}
+
         }
 
 
