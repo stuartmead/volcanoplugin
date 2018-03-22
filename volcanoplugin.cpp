@@ -23,8 +23,9 @@
 #include "gdal.h"
 
 #include "volcanoplugin.h"
+#include "fuzzylocation.h"
 #include "mergerasters.h"
-#include "titanh5reader.h"
+//#include "titanh5reader.h"
 #include "energyconoid.h"
 #include "ellipticalpile.h"
 #include "totalupstreamproperty.h"
@@ -124,6 +125,7 @@ namespace RF
         addFactory(CSIRO::DataExecution::DataFactoryTraits<RF::SlopeAlgType>::getInstance());
         addFactory(CSIRO::DataExecution::DataFactoryTraits<RF::CurvatureType>::getInstance());
         addFactory(CSIRO::DataExecution::DataFactoryTraits<RF::BoundsofRaster>::getInstance());
+		addFactory(CSIRO::DataExecution::DataFactoryTraits<RF::FuzzyMembershipType>::getInstance());
         
         // Add your operation factories like this:
         //addFactory( CSIRO::DataExecution::OperationFactoryTraits<MyOperation>::getInstance() );
@@ -157,8 +159,9 @@ namespace RF
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<TotalUpstreamProperty>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<EllipticalPile>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<EnergyConoid>::getInstance());
-        addFactory(CSIRO::DataExecution::OperationFactoryTraits<TitanH5Reader>::getInstance());
+        //addFactory(CSIRO::DataExecution::OperationFactoryTraits<TitanH5Reader>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<MergeRasters>::getInstance());
+        addFactory(CSIRO::DataExecution::OperationFactoryTraits<FuzzyLocation>::getInstance());
 
         // Add your widget factories like this:
         //addFactory( MyNamespace::MyWidgetFactory::getInstance() );
@@ -168,6 +171,8 @@ namespace RF
         addFactory(curvatureTypeWidgetFact);
         static CSIRO::Widgets::EnumComboBoxFactory<RF::FlowDirType> flowDirtTypeWidgetFact;
         addFactory(flowDirtTypeWidgetFact);
+		static CSIRO::Widgets::EnumComboBoxFactory<RF::FuzzyMembershipType> fuzzyMembershipTypeWidgetFact;
+		addFactory(fuzzyMembershipTypeWidgetFact);
 
         return true;
     }

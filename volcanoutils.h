@@ -75,6 +75,13 @@ namespace RF
         DINF,
         D8
     };
+
+	enum FuzzyMembershipType
+	{
+		CONSTANT,
+		LINEAR,
+		GAUSSIAN
+	};
 }
 
 namespace CSIRO
@@ -99,6 +106,13 @@ namespace CSIRO
             names.push_back("D-infinity");
             names.push_back("D-8");
         }
+
+		template <> inline void getEnumNames<RF::FuzzyMembershipType>(QStringList& names)
+		{
+			names.push_back("Constant");
+			names.push_back("Linear");
+			names.push_back("Gaussian");
+		}
     }
 }
 
@@ -226,4 +240,7 @@ DECLARE_WORKSPACE_ENUMTOINTADAPTOR(RF::CurvatureType, RF_API)
 
 DECLARE_WORKSPACE_DATA_FACTORY(RF::FlowDirType, RF_API)
 DECLARE_WORKSPACE_ENUMTOINTADAPTOR(RF::FlowDirType, RF_API)
+
+DECLARE_WORKSPACE_DATA_FACTORY(RF::FuzzyMembershipType, RF_API)
+DECLARE_WORKSPACE_ENUMTOINTADAPTOR(RF::FuzzyMembershipType, RF_API)
 #endif
