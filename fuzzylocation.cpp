@@ -139,10 +139,92 @@ namespace RF
 
 		//Create kernel input for erosion and dilation
 		cv::Mat kernel = cv::Mat::zeros(cv::Size(kernelSize,kernelSize), CV_32F);
+		//Create dilation and erosion doubles
+		double dilation, erosion;
 
 		if (memberType == RF::FuzzyMembershipType::LINEAR) {
-			std::cout << QString("ERROR: Linear filter not implemented yet") + "\n";
-			return false;
+			double length = (int)(kernelSize / 2); //Cast to int should floor without negative infinite
+			double dist = sqrt(length*length + length*length);
+			double m = -1.0 / dist; //Calculate slope, is negative to go from 0 to distance
+			//Generate kernel
+			for (int ki = 0; ki < kernel.rows; ++ki) {
+				double rlength = fabs(ki - (int)(kernelSize / 2)); //Cast to int should floor without negative infinite
+				for (int kj = 0; kj < kernel.cols; ++kj) {
+					double clength = fabs(kj - (int)(kernelSize / 2));
+					//Calculate distance
+					double kdist = sqrt(rlength*rlength + clength*clength);
+					kernel.at<float>(ki, kj) = float(m*kdist + 1.0);
+				}
+			}
+			std::cout << "Linear Mat = " << std::endl << kernel << std::endl;
+			//Now convolve the kernels
+			for (int i = 0; i < dataToMat.rows; ++i) {
+				int rowStart = std::max(i - ((kernelSize - 1) / 2), 0);
+				int rowEnd = std::min(i + ((kernelSize - 1) / 2) + 1, dataToMat.rows);
+				for (int j = 0; j < dataToMat.cols; ++j) {
+					int colStart = std::max(j - ((kernelSize - 1) / 2), 0);
+					int colEnd = std::min(j + ((kernelSize - 1) / 2) + 1, dataToMat.cols);
+
+					cv::Mat R = dataToMat(cv::Range(rowStart, rowEnd), cv::Range(colStart, colEnd));
+
+					if (R.total() != kernel.total()) { /*
+													   if (rowStart == 0) {
+													   if (colStart == 0) {
+													   cv::minMaxLoc(R.mul(kernel(cv::Range(kernelSize - R.size().height, R.size().height), //Rows
+													   cv::Range(kernelSize - R.size().width, R.size().width)), scaleFactor), //Cols
+													   &erosion, &dilation, NULL, NULL);
+													   }
+													   else if (colEnd == dataToMat.cols) {
+													   cv::minMaxLoc(R.mul(kernel(cv::Range(kernelSize - R.size().height, R.size().height), //Rows
+													   cv::Range(0, R.size().width)), scaleFactor), //Cols
+													   &erosion, &dilation, NULL, NULL);
+													   }
+													   else {
+													   cv::minMaxLoc(R.mul(kernel(cv::Range(kernelSize - R.size().height, R.size().height), //Rows
+													   cv::Range::all()), scaleFactor), //Cols
+													   &erosion, &dilation, NULL, NULL);
+													   }
+													   }
+													   else if (rowEnd == dataToMat.rows) {
+													   if (colStart == 0) {
+													   cv::minMaxLoc(R.mul(kernel(cv::Range(0, R.size().height), //Rows
+													   cv::Range(kernelSize - R.size().width, R.size().width)), scaleFactor), //Cols
+													   &erosion, &dilation, NULL, NULL);
+													   }
+													   else if (colEnd == dataToMat.cols) {
+													   cv::minMaxLoc(R.mul(kernel(cv::Range(0, R.size().height), //Rows
+													   cv::Range(0, R.size().width)), scaleFactor), //Cols
+													   &erosion, &dilation, NULL, NULL);
+													   }
+													   else {
+													   cv::minMaxLoc(R.mul(kernel(cv::Range(0, R.size().height), //Rows
+													   cv::Range::all()), scaleFactor), //Cols
+													   &erosion, &dilation, NULL, NULL);
+													   }
+													   }
+													   else if (colStart == 0) {
+													   //Rowstart and end cases dealth with
+													   cv::minMaxLoc(R.mul(kernel(cv::Range::all(), //Rows
+													   cv::Range(kernelSize - R.size().width, R.size().width)), scaleFactor), //Cols
+													   &erosion, &dilation, NULL, NULL);
+													   }
+													   else if (colEnd == dataToMat.cols) {
+													   cv::minMaxLoc(R.mul(kernel(cv::Range::all(), //Rows
+													   cv::Range(0, R.size().width)), scaleFactor), //Cols
+													   &erosion, &dilation, NULL, NULL);
+													   }
+													   */
+						dilation = 0;
+						erosion = 0;
+					}
+					else {
+						cv::minMaxLoc(R.mul(kernel), &erosion, &dilation, NULL, NULL);
+					}
+
+					dilationCategory.at<float>(i, j) = float(dilation);
+					erosionCategory.at<float>(i, j) = float(erosion);
+				}
+			}
 		}
 		else if (memberType == RF::FuzzyMembershipType::CONSTANT) {
 			kernel = cv::getStructuringElement(cv::MorphShapes::MORPH_RECT, kernel.size());
@@ -156,8 +238,6 @@ namespace RF
 			float scaleFactor = 1.0 / kernel.at<float>((kernelSize - 1) / 2, (kernelSize - 1) / 2);
 			//std::cout << "Mat = " << std::endl << kernel << std::endl;
 			//Run convolution
-			double dilation, erosion;
-			int count = 0;
 			for (int i = 0; i < dataToMat.rows; ++i) {
 				int rowStart = std::max(i - ((kernelSize - 1) / 2), 0);
 				int rowEnd = std::min(i + ((kernelSize - 1) / 2) + 1, dataToMat.rows);
@@ -228,7 +308,7 @@ namespace RF
 
 		}
 
-		outputDataset = GDALCreate(GDALGetDatasetDriver(categoricalMap),
+		outputDataset = GDALCreate(GDALGetDriverByName("GTiff"),//GDALGetDatasetDriver(categoricalMap),
 			outputName.toLocal8Bit().constData(),
 			GDALGetRasterXSize(categoricalMap), GDALGetRasterYSize(categoricalMap),
 			2,//Dilation an derosion map
@@ -260,6 +340,7 @@ namespace RF
 			GDT_Float32,
 			0, 0);
 
+		GDALClose(outputDataset);
 
         return true;
     }
