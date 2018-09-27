@@ -57,6 +57,49 @@
 #define ROOT_2 sqrtf(2)
 #endif
 
+/*
+Write out raster band
+*/
+CPLErr writeRasterData(GDALDatasetH dataset, GDALDriverH driver, double * transform, int rasterXsize, int rasterYsize, float noDataValue, float * data, const char * filename) 
+{
+	//Create dataset - only works for 1 band
+	dataset = GDALCreate(driver, filename, rasterXsize, rasterYsize, 1, GDT_Float32, NULL);
+	if (dataset == NULL) {
+		std::cout << QString("ERROR: Cannot create GDAL dataset %1").arg(filename) + "\n";
+		return CPLErr::CE_Failure;
+	}
+	GDALRasterBandH band = GDALGetRasterBand(dataset, 1);
+	if (band == NULL) {
+		std::cout << QString("ERROR: Cannot access dataset %1 band").arg(filename) + "\n";
+		return CPLErr::CE_Failure;
+	}
+	
+	if (GDALSetGeoTransform(dataset, transform) != CPLErr::CE_None)
+	{
+		std::cout << QString("ERROR: Cannot create GDAL dataset %1 transform").arg(filename) + "\n";
+		std::cout << QString("Transform is %1, %2, %3, %4, %5, %6").arg(transform[0]).arg(transform[1])
+			.arg(transform[2]).arg(transform[3]).arg(transform[4]).arg(transform[5]) + "\n";
+		return CPLErr::CE_Failure;
+	}
+	if (GDALSetRasterNoDataValue(band, noDataValue) != CPLErr::CE_None) 
+	{
+		std::cout << QString("ERROR: Cannot create assign NoData to dataset %1").arg(filename) + "\n";
+		return CPLErr::CE_Failure;
+	}
+	CPLErr error = GDALRasterIO(band, GF_Write,
+		0, 0,
+		rasterXsize, rasterYsize,
+		data,
+		rasterXsize, rasterYsize,
+		GDT_Float32,
+		0, 0);
+	GDALClose(dataset);
+	return error;
+}
+
+/*
+getRasterData: Return a float array from the dataset 
+*/
 float * getRasterData(GDALDatasetH raster, float dstNodataValue,
 	int xOffset, int yOffset, int xLength, int yLength, double scaleFactor, int bandNo)
 {

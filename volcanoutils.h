@@ -139,6 +139,10 @@ CPLErr GDALGeneric3x3Processing (GDALRasterBandH srcBand,
 float * getRasterData(GDALDatasetH raster, float dstNodataValue,
 	int xOffset = 0, int yOffset = 0, int xLength = 0, int yLength = 0, double scaleFactor = 1.0, int bandNo = 1);
 
+/*
+Write out raster band
+*/
+CPLErr writeRasterData(GDALDatasetH dataset, GDALDriverH driver, double * transform, int rasterXsize, int rasterYsize, float noDataValue, float * data, const char * filename);
 
 /***************************************
 SLOPE
