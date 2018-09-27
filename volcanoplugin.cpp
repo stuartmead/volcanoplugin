@@ -23,9 +23,12 @@
 #include "gdal.h"
 
 #include "volcanoplugin.h"
+#include "deformtosphere.h"
+#include "scoopreader.h"
 #include "fuzzylocation.h"
 #include "mergerasters.h"
 //#include "titanh5reader.h"
+#include "deionise.h"
 #include "energyconoid.h"
 #include "ellipticalpile.h"
 #include "totalupstreamproperty.h"
@@ -151,6 +154,9 @@ namespace RF
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<Warp>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<ProjToOffset>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<ScaleRasterValues>::getInstance());
+        addFactory(CSIRO::DataExecution::OperationFactoryTraits<ScoopReader>::getInstance());
+        addFactory(CSIRO::DataExecution::OperationFactoryTraits<DeformToSphere>::getInstance());
+		addFactory(CSIRO::DataExecution::OperationFactoryTraits<Deionise>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<Smooth>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<BoxFilter>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<MultiplyRasters>::getInstance());

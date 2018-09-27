@@ -64,6 +64,8 @@ include_directories(${HDF5_INCLUDE_DIRS})
 link_directories(${GDAL_DIR})
 
 set(HEADERS
+    ${VOLCANO_SOURCE_DIR}/deformtosphere.h
+    ${VOLCANO_SOURCE_DIR}/scoopreader.h
     ${VOLCANO_SOURCE_DIR}/fuzzylocation.h
     ${VOLCANO_SOURCE_DIR}/mergerasters.h
     #${VOLCANO_SOURCE_DIR}/titanh5reader.h
@@ -73,6 +75,7 @@ set(HEADERS
     ${VOLCANO_SOURCE_DIR}/getpixelvalue.h
     ${VOLCANO_SOURCE_DIR}/uplsopefailurevolume.h
     ${VOLCANO_SOURCE_DIR}/multiplyrasters.h
+	${VOLCANO_SOURCE_DIR}/deionise.h
     ${VOLCANO_SOURCE_DIR}/boxfilter.h
     ${VOLCANO_SOURCE_DIR}/smooth.h
     ${VOLCANO_SOURCE_DIR}/scalerastervalues.h
@@ -107,6 +110,8 @@ set(HEADERS
 )
 
 set(INSTALL_HEADERS
+    ${VOLCANO_SOURCE_DIR}/deformtosphere.h
+    ${VOLCANO_SOURCE_DIR}/scoopreader.h
     ${VOLCANO_SOURCE_DIR}/fuzzylocation.h
     ${VOLCANO_SOURCE_DIR}/mergerasters.h
     #${VOLCANO_SOURCE_DIR}/titanh5reader.h
@@ -116,6 +121,7 @@ set(INSTALL_HEADERS
     ${VOLCANO_SOURCE_DIR}/getpixelvalue.h
     ${VOLCANO_SOURCE_DIR}/uplsopefailurevolume.h
     ${VOLCANO_SOURCE_DIR}/multiplyrasters.h
+	${VOLCANO_SOURCE_DIR}/deionise.h
     ${VOLCANO_SOURCE_DIR}/boxfilter.h
     ${VOLCANO_SOURCE_DIR}/smooth.h
     ${VOLCANO_SOURCE_DIR}/scalerastervalues.h
@@ -152,6 +158,8 @@ set(MOC_HEADERS
 )
 
 set(SOURCES
+    ${VOLCANO_SOURCE_DIR}/deformtosphere.cpp
+    ${VOLCANO_SOURCE_DIR}/scoopreader.cpp
     ${VOLCANO_SOURCE_DIR}/fuzzylocation.cpp
     ${VOLCANO_SOURCE_DIR}/mergerasters.cpp
     #${VOLCANO_SOURCE_DIR}/titanh5reader.cpp
@@ -161,7 +169,8 @@ set(SOURCES
     ${VOLCANO_SOURCE_DIR}/getpixelvalue.cpp
     ${VOLCANO_SOURCE_DIR}/uplsopefailurevolume.cpp
     ${VOLCANO_SOURCE_DIR}/multiplyrasters.cpp
-    ${VOLCANO_SOURCE_DIR}/boxfilter.cpp
+    ${VOLCANO_SOURCE_DIR}/deionise.cpp
+	${VOLCANO_SOURCE_DIR}/boxfilter.cpp
     ${VOLCANO_SOURCE_DIR}/smooth.cpp
     ${VOLCANO_SOURCE_DIR}/scalerastervalues.cpp
     ${VOLCANO_SOURCE_DIR}/projtooffset.cpp
