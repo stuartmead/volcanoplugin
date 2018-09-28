@@ -221,6 +221,27 @@ namespace RF
 			}
 		}
 
+        //Deform by height
+        CSIRO::Mesh::Vector3D pos;
+        if (mesh.generateAttachmentInfo(CSIRO::Mesh::ElementType::Quad::getInstance())){
+            std::cout << QString("Attachment info exists, attempting to deform nodes\n");
+            //Loop through nodes
+            for (CSIRO::Mesh::MeshNodesInterface::iterator it = nodes.begin(); it != nodes.end(); ++it){
+                pos = nodes.getPosition(*it);
+                CSIRO::Mesh::ElementHandleList elementList = mesh.getAttachedElements(CSIRO::Mesh::ElementType::Quad::getInstance(),
+                *it);
+                double aveHt = 0.0;
+                for (CSIRO::Mesh::ElementHandleList::iterator eIt = elementList.begin(); eIt != elementList.end(); ++eIt ){
+                    double storage;
+                    elems.getState(*eIt, pH, storage);
+                    aveHt += storage;
+                }
+                aveHt = aveHt/(double)elementList.size();
+                pos.z = pos.z + aveHt;
+                nodes.setPosition(*it, pos);
+            }
+        }
+
         return true;
     }
 

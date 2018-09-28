@@ -60,7 +60,8 @@
 /*
 Write out raster band
 */
-CPLErr writeRasterData(GDALDatasetH dataset, GDALDriverH driver, double * transform, int rasterXsize, int rasterYsize, float noDataValue, float * data, const char * filename) 
+CPLErr writeRasterData(GDALDatasetH dataset, GDALDriverH driver, double * transform, 
+    int rasterXsize, int rasterYsize, float noDataValue, float * data, const char * filename, const char * pJref) 
 {
 	//Create dataset - only works for 1 band
 	dataset = GDALCreate(driver, filename, rasterXsize, rasterYsize, 1, GDT_Float32, NULL);
@@ -86,6 +87,7 @@ CPLErr writeRasterData(GDALDatasetH dataset, GDALDriverH driver, double * transf
 		std::cout << QString("ERROR: Cannot create assign NoData to dataset %1").arg(filename) + "\n";
 		return CPLErr::CE_Failure;
 	}
+    GDALSetProjection(dataset, pJref);
 	CPLErr error = GDALRasterIO(band, GF_Write,
 		0, 0,
 		rasterXsize, rasterYsize,
