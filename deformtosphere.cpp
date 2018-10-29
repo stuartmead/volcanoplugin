@@ -13,6 +13,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <fstream>
 
 #include <qstring.h>
 #include "Workspace/Application/LanguageUtils/streamqstring.h"
@@ -165,7 +166,7 @@ namespace RF
 		CSIRO::Mesh::NodeStateHandle volState = nodes.getStateHandle("vol_m^3");
 		CSIRO::Mesh::NodeStateHandle angleState = nodes.getStateHandle("angle");
 		CSIRO::Mesh::NodeStateHandle fosState = nodes.getStateHandle("F_Bish");
-
+                
 		//Get node positon
 		CSIRO::Mesh::Vector3D pos = nodes.getPosition(*it);
 		nodes.getState(*it, radState, radius);
@@ -176,6 +177,14 @@ namespace RF
 		CSIRO::Mesh::BoundingSphere bounds = CSIRO::Mesh::BoundingSphere(pos, radius);
 		CSIRO::Mesh::Vector3D max, min;
 		bounds.getBoundingBox(min, max);
+
+                //SRM TEMP - Write out to a csvFile!
+                std::ofstream ofs;
+		QString csv = cutDatasetname + ".csv";
+                ofs.open(csv.toLocal8Bit().constData(), std::ofstream::out);
+                ofs << "Node, Radius (m), Volume (m^3), Angle (deg), F_Bish" << "\n";
+		ofs << selectedNode << "," << radius << "," << volume << "," << angle << "," << fosBish;
+                ofs.close();
 		
 		//Copy array to output
 		float * outputDem;
