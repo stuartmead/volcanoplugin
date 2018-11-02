@@ -51,7 +51,8 @@ namespace RF
 
         // Inputs and outputs
         CSIRO::DataExecution::SimpleInput< QString > fileName_;
-        CSIRO::DataExecution::SimpleOutput< CSIRO::Mesh::MeshModelInterface > mesh_;
+        CSIRO::DataExecution::SimpleInput< double > htThresh_;
+	CSIRO::DataExecution::SimpleOutput< CSIRO::Mesh::MeshModelInterface > mesh_;
 
 
         TitanH5ReaderImpl(TitanH5Reader& op);
@@ -67,6 +68,7 @@ namespace RF
     TitanH5ReaderImpl::TitanH5ReaderImpl(TitanH5Reader& op) :
         op_(op),
         fileName_("File name",  op_),
+	htThresh_("Height threshold for velocity", op_),
         mesh_("Mesh",  op_)
     {
         // Make sure all of our inputs have data by default. If your operation accepts a
@@ -179,6 +181,7 @@ namespace RF
 		CSIRO::Mesh::ElementStateHandle xM = elems.addState("X momentum", htRef);
 		CSIRO::Mesh::ElementStateHandle yM = elems.addState("Y momentum", htRef);
 		CSIRO::Mesh::ElementStateHandle mMag = elems.addState("Momentum mag", htRef);
+		CSIRO::Mesh::ElementStateHandle vMag = elems.addState("Velocity mag", htRef);
 
 		QVector<float> pileVals = pHeight.readArray();
 		QVector<float> xVals = momX.readArray();
@@ -209,7 +212,35 @@ namespace RF
 			elems.setState(eh, xM, (double)xVals[e]);
 			elems.setState(eh, yM, (double)yVals[e]);
 			elems.setState(eh, mMag, (double)sqrt(xVals[e] * xVals[e] + yVals[e] * yVals[e]));
+			if (pileVals[e] > *htThresh_)
+			{
+				elems.setState(eh, vMag, (double)(sqrt(xVals[e] * xVals[e] + yVals[e] * yVals[e]))/pileVals[e]);
+			} else
+			{
+				elems.setState(eh, vMag, (double)0.0);
+			}
 		}
+
+        //Deform by height
+        CSIRO::Mesh::Vector3D pos;
+        if (mesh.generateAttachmentInfo(CSIRO::Mesh::ElementType::Quad::getInstance())){
+            std::cout << QString("Attachment info exists, attempting to deform nodes\n");
+            //Loop through nodes
+            for (CSIRO::Mesh::MeshNodesInterface::iterator it = nodes.begin(); it != nodes.end(); ++it){
+                pos = nodes.getPosition(*it);
+                CSIRO::Mesh::ElementHandleList elementList = mesh.getAttachedElements(CSIRO::Mesh::ElementType::Quad::getInstance(),
+                *it);
+                double aveHt = 0.0;
+                for (CSIRO::Mesh::ElementHandleList::iterator eIt = elementList.begin(); eIt != elementList.end(); ++eIt ){
+                    double storage;
+                    elems.getState(*eIt, pH, storage);
+                    aveHt += storage;
+                }
+                aveHt = aveHt/(double)elementList.size();
+                pos.z = pos.z + aveHt;
+                nodes.setPosition(*it, pos);
+            }
+        }
 
         return true;
     }

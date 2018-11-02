@@ -13,6 +13,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <fstream>
 
 #include <qstring.h>
 #include "Workspace/Application/LanguageUtils/streamqstring.h"
@@ -165,7 +166,7 @@ namespace RF
 		CSIRO::Mesh::NodeStateHandle volState = nodes.getStateHandle("vol_m^3");
 		CSIRO::Mesh::NodeStateHandle angleState = nodes.getStateHandle("angle");
 		CSIRO::Mesh::NodeStateHandle fosState = nodes.getStateHandle("F_Bish");
-
+                
 		//Get node positon
 		CSIRO::Mesh::Vector3D pos = nodes.getPosition(*it);
 		nodes.getState(*it, radState, radius);
@@ -176,6 +177,14 @@ namespace RF
 		CSIRO::Mesh::BoundingSphere bounds = CSIRO::Mesh::BoundingSphere(pos, radius);
 		CSIRO::Mesh::Vector3D max, min;
 		bounds.getBoundingBox(min, max);
+
+                //SRM TEMP - Write out to a csvFile!
+                std::ofstream ofs;
+		QString csv = cutDatasetname + ".csv";
+                ofs.open(csv.toLocal8Bit().constData(), std::ofstream::out);
+                ofs << "Node, Radius (m), Volume (m^3), Angle (deg), F_Bish" << "\n";
+		ofs << selectedNode << "," << radius << "," << volume << "," << angle << "," << fosBish;
+                ofs.close();
 		
 		//Copy array to output
 		float * outputDem;
@@ -201,31 +210,6 @@ namespace RF
 		double rsq = radius*radius;
 		
 		//Loop through DEM
-		/*
-		for (int r = 0; r < GDALGetRasterBandXSize(demBand); ++r) {
-			//Calc X in projection space
-			double x_loc = transform[0] + r * transform[1];
-			if (x_loc > min.x && x_loc < max.x) { //Only change in-bounds cells
-				for (int c = 0; c < GDALGetRasterBandYSize(demBand); ++c) {
-					double y_loc = transform[3] + c*transform[5];
-					if (y_loc > min.y && y_loc < max.y) { //Only change in-bounds cells
-						//Create vector
-						cellPos.x = transform[0] + r*transform[1] + c*transform[2];
-						cellPos.y = transform[3] + r*transform[4] + c*transform[5];
-						cellPos.z = demData[r*c];
-						//Now check point is inside sphere
-						if (bounds.contains(cellPos)) {
-							//Calculate Z value (minimum) 
-							zVal = pos.z - sqrt(pow(fabs(cellPos.x - pos.x), 2) + pow(fabs(cellPos.y - pos.y), 2) + rsq);
-							outputDem[r*c] = (float)zVal;
-							heightDem[r*c] = (float)(demData[r*c] - zVal);
-						}
-					}
-				}
-			}
-		}
-		*/
-		
 		//Coefficients between Pixel Line and Projected (Yp, Xp space)
 		//Xp = padfTransform[0] + P*padfTransform[1] + L*padfTransform[2];
 		//Yp = padfTransform[3] + P*padfTransform[4] + L*padfTransform[5];
@@ -259,6 +243,7 @@ namespace RF
 			NULL);
 		GDALRasterBandH cutDemBand = GDALGetRasterBand(cutDEM, 1);
 		GDALSetGeoTransform(cutDEM, transform);
+	    GDALSetProjection(cutDEM, GDALGetProjectionRef(demDataset));
 		/*
 		if (GDALSetProjection(cutDEM, GDALGetProjectionRef(demDataset)) != CE_None)
 		{
@@ -291,10 +276,11 @@ namespace RF
 		}
 
 		//GDALClose(cutDEM);
-		//Write out height data
+		
+                //Write out height data
 		error = writeRasterData(heightRaster, GDALGetDriverByName("GTiff"), transform,
-			GDALGetRasterBandXSize(demBand), GDALGetRasterBandYSize(demBand), dstNoDataValue,
-			heightDem, heightDatasetname.toLocal8Bit().constData());
+			GDALGetRasterBandXSize(demBand), GDALGetRasterBandYSize(demBand), 0.0,
+			heightDem, heightDatasetname.toLocal8Bit().constData(), GDALGetProjectionRef(demDataset));
 
 		if (error != CPLErr::CE_None) {
 			std::cout << QString("ERROR: GDALRaster write operation failed.") + "\n";

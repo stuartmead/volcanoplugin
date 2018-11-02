@@ -142,7 +142,8 @@ float * getRasterData(GDALDatasetH raster, float dstNodataValue,
 /*
 Write out raster band
 */
-CPLErr writeRasterData(GDALDatasetH dataset, GDALDriverH driver, double * transform, int rasterXsize, int rasterYsize, float noDataValue, float * data, const char * filename);
+CPLErr writeRasterData(GDALDatasetH dataset, GDALDriverH driver, double * transform, 
+    int rasterXsize, int rasterYsize, float noDataValue, float * data, const char * filename, const char * pJref);
 
 /***************************************
 SLOPE

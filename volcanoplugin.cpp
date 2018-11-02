@@ -28,7 +28,7 @@
 #include "scoopreader.h"
 #include "fuzzylocation.h"
 #include "mergerasters.h"
-//#include "titanh5reader.h"
+#include "titanh5reader.h"
 #include "deionise.h"
 #include "energyconoid.h"
 #include "ellipticalpile.h"
@@ -167,7 +167,7 @@ namespace RF
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<TotalUpstreamProperty>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<EllipticalPile>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<EnergyConoid>::getInstance());
-        //addFactory(CSIRO::DataExecution::OperationFactoryTraits<TitanH5Reader>::getInstance());
+        addFactory(CSIRO::DataExecution::OperationFactoryTraits<TitanH5Reader>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<MergeRasters>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<FuzzyLocation>::getInstance());
 
