@@ -24,6 +24,7 @@
 #include "ogr_spatialref.h"
 
 #include "volcanoplugin.h"
+#include "volcanoutils.h"
 #include "energycone.h"
 
 
@@ -164,14 +165,17 @@ namespace RF
         }
 
         std::cout << QString("Max elevation is %1 at cell %2, %3").arg(maxElev).arg(cells[0]).arg(cells[1]) + "\n";
+		
+		//Get elevation of the pixel
+		//Get the inverse geotransform
+		int pixelX = (int)floor(invTransform[0] + invTransform[1] * *dataXLocation_ + invTransform[2] * *dataYLocation_);
+		int pixelY = (int)floor(invTransform[3] + invTransform[4] * *dataXLocation_ + invTransform[5] * *dataYLocation_);
 
-
-        if (xLocation >= 0.0 && yLocation >= 0.0)
-        {
-            cells[0] = (int) xLocation;
-            cells[1] = (int) yLocation;
-            maxElev = elevation[(cells[1]*GDALGetRasterBandXSize(hBand))+cells[0]];
-            std::cout << QString("Elevation is %1 at cell %2, %3").arg(maxElev).arg(cells[0]).arg(cells[1]) + "\n";
+		if (xLocation >= 0.0 && yLocation >= 0.0)
+		{
+			float * maxElev = getRasterData(elevationDataset, dstNodataValue, pixelX, pixelY,
+				1, 1);  
+            std::cout << QString("Elevation is %1 m").arg(*maxElev) + "\n";
         }
        
         maxElev = maxElev + *dataAddHeight_;

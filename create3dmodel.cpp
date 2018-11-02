@@ -195,7 +195,7 @@ namespace RF
         double xposn = transform[0];
         double yposn = transform[3];
         std::vector<CSIRO::Mesh::NodeHandle> nodeLookup;
-        int it = 0;
+		int it = 0;
         for (int i = 0; i < scaleYsize; ++i)//Line
         {
             for (int j = 0; j < scaleXsize; ++j)//Pixel

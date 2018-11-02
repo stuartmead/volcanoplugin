@@ -64,6 +64,7 @@ include_directories(${HDF5_INCLUDE_DIRS})
 link_directories(${GDAL_DIR})
 
 set(HEADERS
+    ${VOLCANO_SOURCE_DIR}/ellipseproperties.h
     ${VOLCANO_SOURCE_DIR}/deformtosphere.h
     ${VOLCANO_SOURCE_DIR}/scoopreader.h
     ${VOLCANO_SOURCE_DIR}/fuzzylocation.h
@@ -110,6 +111,7 @@ set(HEADERS
 )
 
 set(INSTALL_HEADERS
+    ${VOLCANO_SOURCE_DIR}/ellipseproperties.h
     ${VOLCANO_SOURCE_DIR}/deformtosphere.h
     ${VOLCANO_SOURCE_DIR}/scoopreader.h
     ${VOLCANO_SOURCE_DIR}/fuzzylocation.h
@@ -158,6 +160,7 @@ set(MOC_HEADERS
 )
 
 set(SOURCES
+    ${VOLCANO_SOURCE_DIR}/ellipseproperties.cpp
     ${VOLCANO_SOURCE_DIR}/deformtosphere.cpp
     ${VOLCANO_SOURCE_DIR}/scoopreader.cpp
     ${VOLCANO_SOURCE_DIR}/fuzzylocation.cpp

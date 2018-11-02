@@ -185,6 +185,9 @@ namespace RF
                 
         std::cout << QString("Coordinate System is: \n %1").arg(projection) + "\n";
 
+		std::cout << QString("Projection: %1").arg(OSRGetAuthorityCode(hSRS, NULL)) + "\n";//OSRGetAttrValue(hSRS, "PROJECTION", 0)
+		
+
         //Origin, x and y
         double transform[6];
         GDALGetGeoTransform(iDataset, transform);
