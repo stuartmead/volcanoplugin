@@ -28,7 +28,7 @@
 #include "scoopreader.h"
 #include "fuzzylocation.h"
 #include "mergerasters.h"
-#include "titanh5reader.h"
+//#include "titanh5reader.h"
 #include "deionise.h"
 #include "energyconoid.h"
 #include "ellipticalpile.h"
@@ -130,6 +130,7 @@ namespace RF
         addFactory(CSIRO::DataExecution::DataFactoryTraits<RF::CurvatureType>::getInstance());
         addFactory(CSIRO::DataExecution::DataFactoryTraits<RF::BoundsofRaster>::getInstance());
 		addFactory(CSIRO::DataExecution::DataFactoryTraits<RF::FuzzyMembershipType>::getInstance());
+		addFactory(CSIRO::DataExecution::DataFactoryTraits<GDALRIOResampleAlg>::getInstance());
         
         // Add your operation factories like this:
         //addFactory( CSIRO::DataExecution::OperationFactoryTraits<MyOperation>::getInstance() );
@@ -167,7 +168,7 @@ namespace RF
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<TotalUpstreamProperty>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<EllipticalPile>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<EnergyConoid>::getInstance());
-        addFactory(CSIRO::DataExecution::OperationFactoryTraits<TitanH5Reader>::getInstance());
+		//addFactory(CSIRO::DataExecution::OperationFactoryTraits<TitanH5Reader>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<MergeRasters>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<FuzzyLocation>::getInstance());
 
@@ -181,6 +182,8 @@ namespace RF
         addFactory(flowDirtTypeWidgetFact);
 		static CSIRO::Widgets::EnumComboBoxFactory<RF::FuzzyMembershipType> fuzzyMembershipTypeWidgetFact;
 		addFactory(fuzzyMembershipTypeWidgetFact);
+		static CSIRO::Widgets::EnumComboBoxFactory<GDALRIOResampleAlg> rasterResampleTypeWidgetFact;
+		addFactory(rasterResampleTypeWidgetFact);
 
         return true;
     }

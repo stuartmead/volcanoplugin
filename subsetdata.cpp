@@ -45,6 +45,7 @@ namespace RF
         CSIRO::DataExecution::TypedObject< int >           dataXLength_;
         CSIRO::DataExecution::TypedObject< int >           dataYLength_;
         CSIRO::DataExecution::TypedObject< double >        dataScaleFactor_;
+		CSIRO::DataExecution::TypedObject< GDALRIOResampleAlg > dataRIOAlg_;
 		CSIRO::DataExecution::TypedObject< bool >		   dataWriteOut_;
 		CSIRO::DataExecution::TypedObject< GDALDatasetH >  dataOutputRaster_;
         CSIRO::DataExecution::TypedObject< QString >       dataOutputRasterName_;
@@ -58,6 +59,7 @@ namespace RF
         CSIRO::DataExecution::InputScalar inputXLength_;
         CSIRO::DataExecution::InputScalar inputYLength_;
         CSIRO::DataExecution::InputScalar inputScaleFactor_;
+		CSIRO::DataExecution::InputScalar inputRIOAlg_;
 		CSIRO::DataExecution::InputScalar inputWriteOut_; 
         CSIRO::DataExecution::Output      outputOutputRaster_;
         CSIRO::DataExecution::InputScalar inputOutputRasterName_;
@@ -82,6 +84,7 @@ namespace RF
         dataXLength_(),
         dataYLength_(),
         dataScaleFactor_(1.0),
+		dataRIOAlg_(GDALRIOResampleAlg::GRIORA_Bilinear),
 		dataWriteOut_(false),
         dataOutputRaster_(),
         dataOutputRasterName_(),
@@ -91,7 +94,8 @@ namespace RF
         inputYOffset_("Y offset", dataYOffset_, op_),
         inputXLength_("X length", dataXLength_, op_),
         inputYLength_("Y length", dataYLength_, op_),
-        inputScaleFactor_("Scale factor", dataScaleFactor_, op_),
+		inputScaleFactor_("Scale factor", dataScaleFactor_, op_),
+		inputRIOAlg_("Resampling algorithm", dataRIOAlg_, op_),
 		inputWriteOut_("Write as .tiff file", dataWriteOut_, op_),
         outputOutputRaster_("Output raster", dataOutputRaster_, op_),
         inputOutputRasterName_("Output raster name", dataOutputRasterName_, op_)
@@ -174,7 +178,7 @@ namespace RF
         std::cout << QString("Raster type is %1").arg(GDALGetDataTypeName(GDALGetRasterDataType(hBand))) + "\n";
 		
 
-
+		/*
         GDALRasterIO(hBand, GF_Read,
             xOffset, yOffset, //X,Y offset in cells
             sizes[0], sizes[1], //X,Y length in cells
@@ -182,8 +186,20 @@ namespace RF
             scaleXsize, scaleYsize, //Number of cells in new dataset
             GDT_Float32, //Type
             0, 0);//Scanline stuff (for interleaving)
+		*/
+		 
+		GDALRasterIOExtraArg extraArgs;
 
-		      
+		INIT_RASTERIO_EXTRA_ARG(extraArgs);
+		extraArgs.eResampleAlg = *dataRIOAlg_;
+		GDALRasterIOEx(hBand, GF_Read,
+			xOffset, yOffset, //X,Y offset in cells
+			sizes[0], sizes[1], //X,Y length in cells
+			data, //data
+			scaleXsize, scaleYsize, //Number of cells in new dataset
+			GDT_Float32, //Type
+			0, 0,
+			&extraArgs);
 
         //Now write data to new raster
         outputRaster = GDALCreate( GDALGetDatasetDriver(gDALDatabase),
@@ -208,7 +224,8 @@ namespace RF
                         scaleXsize, scaleYsize,
                         GDT_Float32,
                         0,0);
-        
+
+
 		if (*dataWriteOut_ == true)
 		{
 			std::cout << QString("Writing out tiff grid file.") + "\n";

@@ -82,6 +82,9 @@ namespace RF
 		LINEAR,
 		GAUSSIAN
 	};
+
+
+	
 }
 
 namespace CSIRO
@@ -111,6 +114,18 @@ namespace CSIRO
 		{
 			names.push_back("Constant");
 			names.push_back("Linear");
+			names.push_back("Gaussian");
+		}
+
+		template <> inline void getEnumNames<GDALRIOResampleAlg>(QStringList& names)
+		{
+			names.push_back("Nearest neighbour");
+			names.push_back("Bilinear");
+			names.push_back("Cubic");
+			names.push_back("B-Cubic");
+			names.push_back("Lanczos");
+			names.push_back("Average");
+			names.push_back("Mode");
 			names.push_back("Gaussian");
 		}
     }
@@ -248,4 +263,7 @@ DECLARE_WORKSPACE_ENUMTOINTADAPTOR(RF::FlowDirType, RF_API)
 
 DECLARE_WORKSPACE_DATA_FACTORY(RF::FuzzyMembershipType, RF_API)
 DECLARE_WORKSPACE_ENUMTOINTADAPTOR(RF::FuzzyMembershipType, RF_API)
+
+DECLARE_WORKSPACE_DATA_FACTORY(GDALRIOResampleAlg, RF_API)
+DECLARE_WORKSPACE_ENUMTOINTADAPTOR(GDALRIOResampleAlg, RF_API)
 #endif

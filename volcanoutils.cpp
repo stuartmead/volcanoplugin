@@ -979,3 +979,6 @@ DEFINE_WORKSPACE_ENUMTOINTADAPTOR(RF::FlowDirType, RF::VolcanoPlugin::getInstanc
 
 DEFINE_WORKSPACE_DATA_FACTORY(RF::FuzzyMembershipType, RF::VolcanoPlugin::getInstance())
 DEFINE_WORKSPACE_ENUMTOINTADAPTOR(RF::FuzzyMembershipType, RF::VolcanoPlugin::getInstance())
+
+DEFINE_WORKSPACE_DATA_FACTORY(GDALRIOResampleAlg, RF::VolcanoPlugin::getInstance())
+DEFINE_WORKSPACE_ENUMTOINTADAPTOR(GDALRIOResampleAlg, RF::VolcanoPlugin::getInstance())

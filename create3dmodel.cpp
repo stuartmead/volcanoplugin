@@ -53,6 +53,7 @@ namespace RF
         CSIRO::DataExecution::TypedObject< int >                              dataXSize_;
         CSIRO::DataExecution::TypedObject< int >                              dataYSize_;
         CSIRO::DataExecution::TypedObject< double >                           dataScaleFactor_;
+		CSIRO::DataExecution::TypedObject< GDALRIOResampleAlg > dataRIOAlg_;
         CSIRO::DataExecution::TypedObject< CSIRO::Mesh::MeshModelInterface >      dataMesh_;
         CSIRO::DataExecution::TypedObject< bool >                                 dataCreateElements_;
 
@@ -67,6 +68,7 @@ namespace RF
         CSIRO::DataExecution::InputScalar inputXSize_;
         CSIRO::DataExecution::InputScalar inputYSize_;
         CSIRO::DataExecution::InputScalar inputScaleFactor_;
+		CSIRO::DataExecution::InputScalar inputRIOAlg_;
         CSIRO::DataExecution::Output      outputMesh_;
         CSIRO::DataExecution::InputScalar inputCreateElements_;
 
@@ -92,6 +94,7 @@ namespace RF
         dataXSize_(-1),
         dataYSize_(-1),
         dataScaleFactor_(1),
+		dataRIOAlg_(GDALRIOResampleAlg::GRIORA_Bilinear),
         dataMesh_(),
         dataCreateElements_(),
         inputElevationDataset_("Elevation Dataset", dataElevationDataset_, op_),
@@ -103,6 +106,7 @@ namespace RF
         inputXSize_("X size", dataXSize_, op_),
         inputYSize_("Y size", dataYSize_, op_),
         inputScaleFactor_("Scale factor", dataScaleFactor_, op_),
+		inputRIOAlg_("Resampling algorithm", dataRIOAlg_, op_),
         outputMesh_("Mesh", dataMesh_, op_),
         inputCreateElements_("Create Elements", dataCreateElements_, op_)
     {
@@ -170,7 +174,7 @@ namespace RF
 
         float *data;
         data = new float [scaleXsize*scaleYsize];
-
+		/*
         GDALRasterIO(hBand, GF_Read,
             nXOff, nYOff, //X,Y offset in cells
             sizes[0], sizes[1], //X,Y length in cells
@@ -178,6 +182,19 @@ namespace RF
             scaleXsize, scaleYsize, //Number of cells in new dataset
             GDT_Float32, //Type
             0, 0);//Scanline stuff (for interleaving)
+		*/
+		GDALRasterIOExtraArg extraArgs;
+
+		INIT_RASTERIO_EXTRA_ARG(extraArgs);
+		extraArgs.eResampleAlg = *dataRIOAlg_;
+		GDALRasterIOEx(hBand, GF_Read,
+			nXOff, nYOff, //X,Y offset in cells
+			sizes[0], sizes[1], //X,Y length in cells
+			data, //data
+			scaleXsize, scaleYsize, //Number of cells in new dataset
+			GDT_Float32, //Type
+			0, 0, //Scanline stuff (for interleaving)
+			&extraArgs);
 
         CSIRO::Mesh::MeshNodesInterface&    nodes = mesh.getNodes();
         CSIRO::Mesh::MeshElementsInterface& elems = mesh.getElements(CSIRO::Mesh::ElementType::Tri::getInstance());
@@ -226,13 +243,14 @@ namespace RF
 					std::cout << QString("Property raster %1, name %2, band %3").arg(rData).arg(*names[rData]).arg(sit) + "\n";
 					GDALRasterBandH pBand = GDALGetRasterBand(*propertyRasters[rData], sit);
 					//Read
-					GDALRasterIO(pBand, GF_Read,
+					GDALRasterIOEx(pBand, GF_Read,
 						nXOff, nYOff, //X,Y offset in cells
 						sizes[0], sizes[1], //X,Y length in cells
 						scrData, //data
 						scaleXsize, scaleYsize, //Number of cells in new dataset
 						GDT_Float32, //Type
-						0, 0);//Scanline stuff (for interleaving)
+						0, 0,//Scanline stuff (for interleaving)
+						&extraArgs);
 
 					QString name = *names[rData];
 					name.append(QString::number(sit));
@@ -257,13 +275,14 @@ namespace RF
 				std::cout << QString("Property raster %1, name %2").arg(rData).arg(*names[rData]) + "\n";
 				GDALRasterBandH pBand = GDALGetRasterBand(*propertyRasters[rData], 1);
 				//Read
-				GDALRasterIO(pBand, GF_Read,
+				GDALRasterIOEx(pBand, GF_Read,
 					nXOff, nYOff, //X,Y offset in cells
 					sizes[0], sizes[1], //X,Y length in cells
 					scrData, //data
 					scaleXsize, scaleYsize, //Number of cells in new dataset
 					GDT_Float32, //Type
-					0, 0);//Scanline stuff (for interleaving)
+					0, 0, //Scanline stuff (for interleaving)
+					&extraArgs);
 
 				CSIRO::Mesh::NodeStateHandle nsh = nodes.addState<double>(*names[rData], 0.0);
 

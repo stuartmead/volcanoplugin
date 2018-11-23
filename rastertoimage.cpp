@@ -53,6 +53,7 @@ namespace RF
         CSIRO::DataExecution::TypedObject< int >                              dataXSize_;
         CSIRO::DataExecution::TypedObject< int >                              dataYSize_;
         CSIRO::DataExecution::TypedObject< double >                           dataScaleFactor_;
+		CSIRO::DataExecution::TypedObject< GDALRIOResampleAlg > dataRIOAlg_;
         CSIRO::DataExecution::TypedObject< QImage >                           dataRasterImage_;
 
 
@@ -65,6 +66,7 @@ namespace RF
         CSIRO::DataExecution::InputScalar inputXSize_;
         CSIRO::DataExecution::InputScalar inputYSize_;
         CSIRO::DataExecution::InputScalar inputScaleFactor_;
+		CSIRO::DataExecution::InputScalar inputRIOAlg_;
         CSIRO::DataExecution::Output      outputRasterImage_;
 
 
@@ -88,6 +90,7 @@ namespace RF
         dataXSize_(-1),
         dataYSize_(-1),
         dataScaleFactor_(1),
+		dataRIOAlg_(GDALRIOResampleAlg::GRIORA_Bilinear),
         dataRasterImage_(),
         inputRasterDataset_("Raster Dataset", dataRasterDataset_, op_),
         inputBandNumber_("Band number", dataBandNumber_, op_),
@@ -97,6 +100,7 @@ namespace RF
         inputXSize_("X size", dataXSize_, op_),
         inputYSize_("Y size", dataYSize_, op_),
         inputScaleFactor_("Scale factor", dataScaleFactor_, op_),
+		inputRIOAlg_("Resampling algorithm", dataRIOAlg_, op_),
         outputRasterImage_("Raster Image", dataRasterImage_, op_)
     {
     }
@@ -159,15 +163,19 @@ namespace RF
         std::cout << QString("Raster type is %1").arg(GDALGetDataTypeName(GDALGetRasterDataType(hBand))) + "\n";
 
 
+		GDALRasterIOExtraArg extraArgs;
 
+		INIT_RASTERIO_EXTRA_ARG(extraArgs);
+		extraArgs.eResampleAlg = *dataRIOAlg_;
 
-        GDALRasterIO(hBand, GF_Read,
+        GDALRasterIOEx(hBand, GF_Read,
             nXOff, nYOff, //X,Y offset in cells
             sizes[0], sizes[1], //X,Y length in cells
             data, //data
             scaleXsize, scaleYsize, //Number of cells in new dataset
             GDT_Float32, //Type
-            0, 0);//Scanline stuff (for interleaving)
+            0, 0,//Scanline stuff (for interleaving)
+			&extraArgs);
 
 
         //Now convert float array to qimage
