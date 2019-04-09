@@ -192,7 +192,7 @@ namespace RF
 					bigA = pow(((xdistance)*cos(radAngle) + (ydistance)*sin(radAngle)), 2) / pow(axes.width, 2);
 					bigB = pow(((ydistance)*cos(radAngle) - (xdistance)*sin(radAngle)), 2) / pow(axes.height, 2);
 					z = sqrt(pow(height, 2)*(1 - bigA - bigB));
-					dataToMat.at<float>(y, x) = (float)z;
+					dataToMat.at<float>(y, x) = std::max(0.0f, (float)z);
 
 				}
 			}

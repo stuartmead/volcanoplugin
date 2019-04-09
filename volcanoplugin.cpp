@@ -23,6 +23,7 @@
 #include "gdal.h"
 
 #include "volcanoplugin.h"
+#include "scoopcounter.h"
 #include "ellipseproperties.h"
 #include "deformtosphere.h"
 #include "scoopreader.h"
@@ -159,6 +160,7 @@ namespace RF
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<ScoopReader>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<DeformToSphere>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<EllipseProperties>::getInstance());
+        addFactory(CSIRO::DataExecution::OperationFactoryTraits<ScoopCounter>::getInstance());
 		addFactory(CSIRO::DataExecution::OperationFactoryTraits<Deionise>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<Smooth>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<BoxFilter>::getInstance());

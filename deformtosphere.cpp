@@ -213,7 +213,7 @@ namespace RF
 		//Coefficients between Pixel Line and Projected (Yp, Xp space)
 		//Xp = padfTransform[0] + P*padfTransform[1] + L*padfTransform[2];
 		//Yp = padfTransform[3] + P*padfTransform[4] + L*padfTransform[5];
-
+		
 		for (int i = 0; i < GDALGetRasterBandXSize(demBand)*GDALGetRasterBandYSize(demBand); ++i) {
 			int y = floorf(i / GDALGetRasterBandXSize(demBand));
 			int x = i - (y * GDALGetRasterBandXSize(demBand));
