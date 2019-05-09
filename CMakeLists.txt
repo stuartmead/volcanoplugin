@@ -60,10 +60,14 @@ include_directories(${HDF5_INCLUDE_DIRS})
 ##link_directories(${HDF5_DIR}/lib)
 #link_directories(${HDF5_DIR}/bin)
 
+set(VTK_DIR "" CACHE PATH "The location of the build directory in your VTK directory")
+find_package(VTK REQUIRED)
+
 #link_directories(${GEOSPATIAL_PLUGIN_DIR})
 link_directories(${GDAL_DIR})
 
 set(HEADERS
+    ${VOLCANO_SOURCE_DIR}/vtireader.h
     ${VOLCANO_SOURCE_DIR}/scoopcounter.h
     ${VOLCANO_SOURCE_DIR}/ellipseproperties.h
     ${VOLCANO_SOURCE_DIR}/deformtosphere.h
@@ -112,6 +116,7 @@ set(HEADERS
 )
 
 set(INSTALL_HEADERS
+    ${VOLCANO_SOURCE_DIR}/vtireader.h
     ${VOLCANO_SOURCE_DIR}/scoopcounter.h
     ${VOLCANO_SOURCE_DIR}/ellipseproperties.h
     ${VOLCANO_SOURCE_DIR}/deformtosphere.h
@@ -162,6 +167,7 @@ set(MOC_HEADERS
 )
 
 set(SOURCES
+    ${VOLCANO_SOURCE_DIR}/vtireader.cpp
     ${VOLCANO_SOURCE_DIR}/scoopcounter.cpp
     ${VOLCANO_SOURCE_DIR}/ellipseproperties.cpp
     ${VOLCANO_SOURCE_DIR}/deformtosphere.cpp
@@ -220,10 +226,10 @@ qtx_wrap_ui(UIC_SOURCES ${UI_SOURCES})
 
 add_definitions(-DVOLCANO_PLUGIN_VERSION=${VOLCANO_PLUGIN_VERSION})
 
-include_directories(${OpenCV_INCLUDE_DIRS})
+include_directories(${OpenCV_INCLUDE_DIRS} ${VTK_INCLUDE_DIRS})
 
 add_library(volcanoplugin ${SOURCES} ${HEADERS} ${MOC_SOURCES} ${UIC_SOURCES})
-target_link_libraries(volcanoplugin dataanalysisplugin meshplugin workspace ${HDF5_LIBRARIES} ${GDAL_LIBRARIES} ${OpenCV_LIBS} ${QT_LIBRARIES})
+target_link_libraries(volcanoplugin dataanalysisplugin meshplugin workspace ${HDF5_LIBRARIES} ${GDAL_LIBRARIES} ${OpenCV_LIBS} ${QT_LIBRARIES} ${VTK_LIBRARIES})
 
 set_target_properties(volcanoplugin PROPERTIES
     DEFINE_SYMBOL RF_EXPORT

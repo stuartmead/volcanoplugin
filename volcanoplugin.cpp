@@ -22,7 +22,8 @@
 
 #include "gdal.h"
 
-#include "volcanoplugin.h"
+#include "volcanoplugin.h""
+#include "vtireader.h"
 #include "scoopcounter.h"
 #include "ellipseproperties.h"
 #include "deformtosphere.h"
@@ -125,7 +126,7 @@ namespace RF
     {
         // Add your data factories like this:
         //addFactory( CSIRO::DataExecution::DataFactoryTraits<MyDataType>::getInstance() );
-        addFactory(CSIRO::DataExecution::DataFactoryTraits<GDALDatasetH>::getInstance());
+		addFactory(CSIRO::DataExecution::DataFactoryTraits<GDALDatasetH>::getInstance());
         addFactory(CSIRO::DataExecution::DataFactoryTraits<BoundsofRaster>::getInstance());
         addFactory(CSIRO::DataExecution::DataFactoryTraits<RF::SlopeAlgType>::getInstance());
         addFactory(CSIRO::DataExecution::DataFactoryTraits<RF::CurvatureType>::getInstance());
@@ -161,6 +162,7 @@ namespace RF
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<DeformToSphere>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<EllipseProperties>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<ScoopCounter>::getInstance());
+        addFactory(CSIRO::DataExecution::OperationFactoryTraits<VTIReader>::getInstance());
 		addFactory(CSIRO::DataExecution::OperationFactoryTraits<Deionise>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<Smooth>::getInstance());
         addFactory(CSIRO::DataExecution::OperationFactoryTraits<BoxFilter>::getInstance());
