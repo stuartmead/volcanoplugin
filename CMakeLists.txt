@@ -229,7 +229,7 @@ add_definitions(-DVOLCANO_PLUGIN_VERSION=${VOLCANO_PLUGIN_VERSION})
 include_directories(${OpenCV_INCLUDE_DIRS} ${VTK_INCLUDE_DIRS})
 
 add_library(volcanoplugin ${SOURCES} ${HEADERS} ${MOC_SOURCES} ${UIC_SOURCES})
-target_link_libraries(volcanoplugin dataanalysisplugin meshplugin workspace ${HDF5_LIBRARIES} ${GDAL_LIBRARIES} ${OpenCV_LIBS} ${QT_LIBRARIES} ${VTK_LIBRARIES})
+target_link_libraries(volcanoplugin dataanalysisplugin meshplugin renderingplugin workspace ${HDF5_LIBRARIES} ${GDAL_LIBRARIES} ${OpenCV_LIBS} ${QT_LIBRARIES} ${VTK_LIBRARIES})
 
 set_target_properties(volcanoplugin PROPERTIES
     DEFINE_SYMBOL RF_EXPORT
