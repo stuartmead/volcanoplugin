@@ -153,7 +153,16 @@ namespace RF
 		if (*info_) { return true; }
 		
 		vtkDataArray *val_array = pd->GetArray(component.toStdString().c_str());
-		
+     
+		std::ofstream outfile(outputFileName_->toLocal8Bit().constData());
+
+		//Initial items
+		outfile << "#3D material property file\n";
+		outfile << "#Generated in workspace\n";
+		outfile << "#i j z cee phi gamt\n";
+		outfile << "coords\n";
+		outfile << "ijz\n";
+	
 		vtkIdType count = 0;
 		for (int z = 0; z < dims[2]; z++) 
 		{
@@ -164,10 +173,10 @@ namespace RF
 					double v = val_array->GetComponent(count, 0);
 					matrix(x, y, z) = v;
 					++count;
-					/*
+										
 					if (count % 10000 == 0) {
-						std::cout << QString("Value is %1 \n").arg(v);
-					}*/
+						std::cout << QString("Value is %1 at %2, %3, %4 \n").arg(v).arg(x).arg(y).arg(z);
+					}
 				}
 			}
 		}
@@ -180,25 +189,22 @@ namespace RF
 		std::cout << QString("A value is %1 \n").arg(scalarMat(50, 50, 50));
 
 		//Write out to a scoops IJZ file
-		std::ofstream outfile(outputFileName_->toLocal8Bit().constData());
-
-		//Initial items
-		outfile << "#3D material property file\n";
-		outfile << "#Generated in workspace\n";
-		outfile << "#i j z cee phi gamt\n";
-		outfile << "coords\n";
-		outfile << "ijz\n";
-
+		
 		double zval;
 		double cee, phi, gamt;
+		int zcount;
 		//Now loop through matrix: x, y, z order
 		for (int x = 0; x < dims[0]; x++) {
 			for (int y = 0; y < dims[1]; y++) {
-				for (int z = 0; z < dims[2]; z++) {
+				zcount = 0;
+				for (int z = 0; z < dims[2]; z++) {					
 					zval = scalarMat(x, y, z);
-					if (zval >= 0.0) {
+					//outfile << "\t" << x + 1 << "\t" << y + 1 << "\t" << origin[2] + ((double)z*spacing[2]);
+					//outfile << "\t" << zval << "\n";
+					if (zval > 0.0) {
+						++zcount;
 						//Output co-ords
-						outfile << "\t" << x + 1 << "\t" << y + 1 << "\t" << origin[2] + ((double)z*spacing[2]);
+						outfile <<  "\t" << x + 1 << "\t" << y + 1 << "\t" << origin[2] + ((double)z*spacing[2]);
 						//Now categorise
 						if (zval > catThreshold_[2]) { //Highest value
 							cee = catCee_[2];
@@ -218,9 +224,15 @@ namespace RF
 						//Output values
 						outfile << "\t" << cee;
 						outfile << "\t" << phi;
-						outfile << "\t"	<< gamt << "\n";
-					}
-
+						outfile << "\t" << gamt << "\n"; 
+					}	
+				}
+				if (zcount == 0) {
+					outfile << "\t" << x + 1 << "\t" << y + 1 << "\t" << origin[2];
+					outfile << "\t" << catCee_[0];
+					outfile << "\t" << catPhi_[0];
+					outfile << "\t" << catGamt_[0];
+					outfile << "\n";
 				}
 			}
 		}
